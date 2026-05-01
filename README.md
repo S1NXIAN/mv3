@@ -1,7 +1,7 @@
 # MV3 — Browser-to-MPV HLS Bridge
 
 <div align="center">
-  <img src="icons/active/icon128.png" width="96" alt="MV3 logo" align="center">
+  <img src="icons/idle/icon128.png" width="96" alt="MV3 logo" align="center">
 </div>
 
 A high-performance Chrome Extension (Manifest V3) that intercepts HLS streams and bridges them to [MPV](https://mpv.io/). Featuring a **Tech Noir** aesthetic, this tool provides a seamless, premium interface for power users who demand the quality and flexibility of a native media player for web-based streams.

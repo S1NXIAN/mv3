@@ -1,18 +1,33 @@
-# Python Native Host
+# --- Extension Specific ---
+*.pem
+*.crx
+*.zip
+releases/
+build/
+dist/
+
+# --- Native Host & Python ---
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
 venv/
 .venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache/
+.pytest_cache/
 
-# AI / Agent Files
-.agents/
-skills-lock.json
-
-# OS Generated
+# --- OS Generated ---
 .DS_Store
 .DS_Store?
 ._*
@@ -21,14 +36,18 @@ skills-lock.json
 ehthumbs.db
 Thumbs.db
 
-# Misc
-*.log
+# --- Editors / IDEs ---
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
 
-# Extension Packaging
-*.pem
-*.crx
-*.zip
-releases/
-build/
+# --- Agents & Workspace ---
+.agents/
+skills-lock.json
+.antigravity/
+.gemini/

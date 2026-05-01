@@ -134,4 +134,4 @@ The popup communicates with the service worker via `chrome.runtime.sendMessage`.
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).

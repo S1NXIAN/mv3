@@ -76,7 +76,14 @@
             <div class="toggle-track"><div class="toggle-thumb"></div></div>
             <span class="toggle-label">PASS_BROWSER_IDENTITY</span>
           </label>
-          <p class="field-hint">Forward Cookies and User-Agent to MPV. Required for authenticated/DRM streams.</p>
+          <p class="field-hint mb-4">Forward Cookies and User-Agent to MPV. Required for authenticated/DRM streams.</p>
+
+          <label class="cyber-toggle">
+            <input type="checkbox" id="toggle-force-h264">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            <span class="toggle-label">FORCE_H264_AVC [h264ify]</span>
+          </label>
+          <p class="field-hint">Block VP8/VP9/AV1 in browser. Reduces CPU usage. (Does not affect MPV).</p>
 
         </div>
       </section>

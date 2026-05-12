@@ -23,6 +23,7 @@ const CONFIG_DEFAULTS = {
   defaultFlags: [],
   snifferEnabled: true,
   passIdentity: true,
+  forceH264: false,
   hwDec: "",
   vo: "",
   alwaysOnTop: false,
@@ -38,10 +39,49 @@ async function getConfig() {
   return _configCache;
 }
 
+// Dynamic H264ify Management
+async function syncH264ify() {
+  const config = await getConfig();
+  const SCRIPT_ID = "h264ify-shield";
+
+  try {
+    const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] });
+    
+    if (config.forceH264) {
+      if (existing.length === 0) {
+        await chrome.scripting.registerContentScripts([{
+          id: SCRIPT_ID,
+          js: ["h264ify.js"],
+          matches: ["<all_urls>"],
+          runAt: "document_start",
+          world: "MAIN",
+          allFrames: true
+        }]);
+        console.log("[MV3 Bridge] H264ify registered.");
+      }
+    } else {
+      if (existing.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] });
+        console.log("[MV3 Bridge] H264ify unregistered.");
+      }
+    }
+  } catch (err) {
+    console.error("[MV3 Bridge] Failed to sync H264ify:", err);
+  }
+}
+
 // Invalidate config cache when settings change
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync") _configCache = null;
+  if (area === "sync") {
+    _configCache = null;
+    if (changes.forceH264) {
+      syncH264ify();
+    }
+  }
 });
+
+// Sync on boot
+syncH264ify();
 
 /* ──────────────────────────────────────────────
  * 2. PER-TAB STATE (HYBRID CACHE)

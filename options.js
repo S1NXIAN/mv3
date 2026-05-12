@@ -8,6 +8,7 @@ const DEFAULTS = {
   defaultFlags: [],
   snifferEnabled: true,
   passIdentity: true,
+  forceH264: false,
   hwDec: "",
   vo: "",
   alwaysOnTop: false,
@@ -25,6 +26,7 @@ async function loadSettings() {
   document.getElementById("input-host-name").value = config.hostName;
   document.getElementById("toggle-sniffer").checked = config.snifferEnabled;
   document.getElementById("toggle-pass-identity").checked = config.passIdentity;
+  document.getElementById("toggle-force-h264").checked = config.forceH264;
   document.getElementById("input-hwdec").value = config.hwDec;
   document.getElementById("input-vo").value = config.vo;
   document.getElementById("toggle-ontop").checked = config.alwaysOnTop;
@@ -54,6 +56,7 @@ async function saveSettings() {
   const hostName = document.getElementById("input-host-name").value.trim();
   const snifferEnabled = document.getElementById("toggle-sniffer").checked;
   const passIdentity = document.getElementById("toggle-pass-identity").checked;
+  const forceH264 = document.getElementById("toggle-force-h264").checked;
   const hwDec = document.getElementById("input-hwdec").value;
   const vo = document.getElementById("input-vo").value;
   const alwaysOnTop = document.getElementById("toggle-ontop").checked;
@@ -76,6 +79,7 @@ async function saveSettings() {
     hostName,
     snifferEnabled,
     passIdentity,
+    forceH264,
     hwDec,
     vo,
     alwaysOnTop,

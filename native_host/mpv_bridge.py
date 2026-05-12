@@ -79,7 +79,8 @@ def handle_play(message):
     url = message.get('url', '')
     flags = message.get('flags', [])
     mpv_path = message.get('mpvPath', '/usr/bin/mpv')
-    cookies = message.get('cookies', '')
+    cookies = message.get('cookies', [])  # Now expected as a list of dicts
+    user_agent = message.get('userAgent', '')
 
     if not url:
         send_message({'status': 'error', 'message': 'No URL provided'})
@@ -89,48 +90,53 @@ def handle_play(message):
         send_message({'status': 'error', 'message': f'MPV not found: {mpv_path}'})
         return
 
-    if not os.access(mpv_path, os.X_OK):
-        send_message({'status': 'error', 'message': f'Not executable: {mpv_path}'})
-        return
-
     # Clean up stale cookie files from previous sessions
     _cleanup_stale_cookies()
 
     safe_flags = [f for f in flags if isinstance(f, str) and f.startswith('-')]
     cmd = [mpv_path] + safe_flags
 
+    if user_agent:
+        cmd.append(f"--user-agent={user_agent}")
+
     referer = message.get('referer', '')
     if referer:
         cmd.append(f"--referrer={referer}")
 
     # ── yt-dlp Hardening ──────────────────────────────────────────────
-    # Force yt-dlp to timeout instead of retrying forever.
-    # This prevents ghost yt-dlp processes from living indefinitely
-    # when mpv crashes or the CDN returns persistent errors.
     ytdl_opts = ['socket-timeout=30']
 
     # ── Cookie Jar (Netscape format) ──────────────────────────────────
-    # Page URLs (YouTube, etc.) need a Netscape Cookie Jar for yt-dlp.
-    # We DO NOT pass cookies as HTTP headers because global cookies
-    # break aggressive CDNs that reject unexpected cookie headers.
-    if cookies:
+    if cookies and isinstance(cookies, list):
         try:
-            domain = _extract_domain(url)
             cookie_file = tempfile.NamedTemporaryFile(
                 mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
             )
             cookie_file.write("# Netscape HTTP Cookie File\n")
-            for pair in cookies.split('; '):
-                if '=' in pair:
-                    name, value = pair.split('=', 1)
-                    cookie_file.write(f"{domain}\tTRUE\t/\tFALSE\t0\t{name}\t{value}\n")
+            
+            for c in cookies:
+                # chrome.cookies fields: domain, path, secure, expirationDate, name, value, hostOnly
+                domain = c.get('domain', '')
+                path = c.get('path', '/')
+                secure = "TRUE" if c.get('secure') else "FALSE"
+                expires = int(c.get('expirationDate', 0))
+                name = c.get('name', '')
+                value = c.get('value', '')
+                
+                # In Netscape format, the second field is 'include subdomains'
+                # For host-only cookies (no leading dot), it's FALSE.
+                subdomains = "TRUE" if domain.startswith('.') else "FALSE"
+                
+                cookie_file.write(f"{domain}\t{subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
+            
             cookie_file.close()
             ytdl_opts.append(f'cookies={cookie_file.name}')
         except Exception:
             pass
 
     # Combine all ytdl options into a single flag
-    cmd.append(f"--ytdl-raw-options={','.join(ytdl_opts)}")
+    if ytdl_opts:
+        cmd.append(f"--ytdl-raw-options={','.join(ytdl_opts)}")
 
     cmd.append('--')
     cmd.append(url)

@@ -100,7 +100,7 @@ async function clearTabState(tabId) {
       await chrome.storage.session.remove(`tab_${tabId}`);
     }
   } catch (_) {}
-  updateBadge(tabId, { urls: [], hasMaster: false }); // Clears badge safely
+  updateBadge(tabId, { urls: [], hasMaster: false });
 }
 
 /* ──────────────────────────────────────────────
@@ -122,9 +122,9 @@ chrome.webRequest.onCompleted.addListener(
   ["responseHeaders"]
 );
 
-chrome.webRequest.onCompleted.addListener(
+chrome.webRequest.onHeadersReceived.addListener(
   handleMimeBasedDetection,
-  { urls: ["<all_urls>"] },
+  { urls: ["<all_urls>"], types: ["xmlhttprequest", "media", "other"] },
   ["responseHeaders"]
 );
 
@@ -140,11 +140,10 @@ async function handleRequestCompleted(details) {
 
 async function handleMimeBasedDetection(details) {
   const { tabId, url, responseHeaders } = details;
-  if (tabId < 0) return;
+  if (tabId < 0 || !responseHeaders) return;
 
   if (/\.m3u8(\?|#|$)/.test(url)) return;
 
-  if (!responseHeaders) return;
   const contentType = responseHeaders.find(
     (h) => h.name.toLowerCase() === "content-type"
   );
@@ -162,12 +161,11 @@ async function handleMimeBasedDetection(details) {
 async function classifyAndStore(tabId, url) {
   const state = await getTabState(tabId);
 
-  // O(1) deduplication via Set
   if (!state._urlIndex) {
     state._urlIndex = new Set(state.urls.map((e) => e.url));
   }
   if (state._urlIndex.has(url) || state.pending.has(url)) return;
-  state.pending.add(url); // Acquire lock
+  state.pending.add(url);
 
   let type = "unknown";
   try {
@@ -180,19 +178,11 @@ async function classifyAndStore(tabId, url) {
         type = "media";
       }
     }
-  } catch (_) {
-    // Keep as "unknown"
-  }
+  } catch (_) {}
 
-  state.pending.delete(url); // Release lock
+  state.pending.delete(url);
 
-  // ── RACE CONDITION CHECK ──
-  // If the tab was cleared (onUpdated) while we were fetching,
-  // the 'state' object we hold is now an orphan. We must abort
-  // to avoid saving stale URLs into the new page's state.
   if (stateCache.get(tabId) !== state) return;
-
-  // Double-check just in case
   if (state._urlIndex.has(url)) return;
 
   state.urls.push({ url, type, timestamp: Date.now() });
@@ -224,14 +214,16 @@ const ICON_ACTIVE = {
 
 async function updateBadge(tabId, state) {
   try {
-    const iconPath = state.urls.length > 0 ? ICON_ACTIVE : ICON_IDLE;
+    const count = state.urls.length;
+    const iconPath = count > 0 ? ICON_ACTIVE : ICON_IDLE;
+    const badgeText = count > 0 ? count.toString() : "";
+    
     await Promise.all([
       chrome.action.setIcon({ path: iconPath, tabId }),
-      chrome.action.setBadgeText({ text: "", tabId }),
+      chrome.action.setBadgeText({ text: badgeText, tabId }),
+      chrome.action.setBadgeBackgroundColor({ color: "#FF003C", tabId })
     ]);
-  } catch (_) {
-    // Tab was likely closed before the icon could update.
-  }
+  } catch (_) {}
 }
 
 /* ──────────────────────────────────────────────
@@ -239,14 +231,12 @@ async function updateBadge(tabId, state) {
  * ────────────────────────────────────────────── */
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  // Clear state on full reload OR SPA-style URL navigation (e.g. YouTube video change)
   if (changeInfo.status === "loading" || changeInfo.url) {
     clearTabState(tabId);
   }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  // Clear from both Cache and Session Storage
   stateCache.delete(tabId);
   try {
     if (chrome.storage && chrome.storage.session) {
@@ -260,47 +250,27 @@ chrome.tabs.onRemoved.addListener((tabId) => {
  * ────────────────────────────────────────────── */
 
 function createContextMenu() {
-  console.log("[MV3 Bridge] createContextMenu() called");
   chrome.contextMenus.removeAll(() => {
-    console.log("[MV3 Bridge] removeAll done, now creating...");
     chrome.contextMenus.create(
       {
         id: "send-to-mpv",
         title: "[ DISPATCH_TO_MPV ]",
         contexts: ["page", "link", "video", "audio"],
-      },
-      () => {
-        if (chrome.runtime.lastError) {
-          console.error("[MV3 Bridge] Menu CREATE FAILED:", chrome.runtime.lastError.message);
-        } else {
-          console.log("[MV3 Bridge] Menu created OK ✓");
-        }
       }
     );
   });
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("[MV3 Bridge] onInstalled fired");
-  createContextMenu();
-});
-chrome.runtime.onStartup.addListener(() => {
-  console.log("[MV3 Bridge] onStartup fired");
-  createContextMenu();
-});
+chrome.runtime.onInstalled.addListener(createContextMenu);
+chrome.runtime.onStartup.addListener(createContextMenu);
 
-console.log("[MV3 Bridge] Registering onClicked listener...");
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    console.log("[MV3 Bridge] Context menu clicked:", info.menuItemId);
     const url = info.linkUrl || info.srcUrl || info.pageUrl;
     const referer = info.pageUrl;
     if (url) {
-      console.log("[MV3 Bridge] Resolved URL:", url);
       sendToMpv(url, [], referer).then(res => {
-        console.log("[MV3 Bridge] sendToMpv result:", JSON.stringify(res));
         if (tab && tab.id && res.success) {
           try {
-            // Flash the active icon briefly to confirm
             chrome.action.setIcon({ path: ICON_ACTIVE, tabId: tab.id });
             setTimeout(async () => {
               const state = await getTabState(tab.id);
@@ -308,8 +278,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             }, 1500);
           } catch (_) {}
         }
-      }).catch(err => {
-        console.error("[MV3 Bridge] sendToMpv threw:", err);
       });
     }
 });
@@ -320,37 +288,20 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 async function getCookiesForUrl(url) {
   try {
-    const cookies = await chrome.cookies.getAll({ url });
-    return cookies.map((c) => `${c.name}=${c.value}`).join("; ");
+    return await chrome.cookies.getAll({ url });
   } catch (e) {
-    console.error("[MV3 Bridge] Failed to extract cookies:", e);
-    return "";
+    return [];
   }
 }
 
 async function sendToMpv(url, extraFlags = [], referer = null) {
   const config = await getConfig();
-  
-  // Build Dynamic Flags
   const dynamicFlags = [];
   
-  if (config.advancedMode) {
-    if (config.hwDec) {
-      dynamicFlags.push(`--hwdec=${config.hwDec}`);
-    }
-    
-    if (config.vo) {
-      dynamicFlags.push(`--vo=${config.vo}`);
-    }
-    
-    if (config.alwaysOnTop) {
-      dynamicFlags.push('--ontop');
-    }
-    
-    if (config.ytdlFormat) {
-      dynamicFlags.push(`--ytdl-format=${config.ytdlFormat}`);
-    }
-  }
+  if (config.hwDec) dynamicFlags.push(`--hwdec=${config.hwDec}`);
+  if (config.vo) dynamicFlags.push(`--vo=${config.vo}`);
+  if (config.alwaysOnTop) dynamicFlags.push('--ontop');
+  if (config.ytdlFormat) dynamicFlags.push(`--ytdl-format=${config.ytdlFormat}`);
 
   const combinedFlags = [...dynamicFlags, ...config.defaultFlags, ...extraFlags];
 
@@ -358,6 +309,7 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
     action: "play",
     url: url,
     referer: referer || url,
+    userAgent: navigator.userAgent,
     flags: combinedFlags,
     mpvPath: config.mpvPath,
   };
@@ -372,7 +324,6 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
       payload,
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error("[MV3 Bridge] Native messaging error:", chrome.runtime.lastError.message);
           resolve({ success: false, error: chrome.runtime.lastError.message });
         } else {
           resolve({ success: true, response });
@@ -389,11 +340,10 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "getTabState") {
     getTabState(message.tabId).then(state => sendResponse(state));
-    return true; // Keeps the messaging channel open for the async response
+    return true;
   }
 
   if (message.action === "sendToMpv") {
-    // Resolve the active tab's page URL as referer for CDN hotlink protection
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       const referer = (tab && tab.url) || message.url;
       sendToMpv(message.url, message.flags || [], referer)

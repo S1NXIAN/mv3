@@ -6,20 +6,27 @@
 
 A high-performance Chrome Extension (Manifest V3) that intercepts HLS streams and bridges them to [MPV](https://mpv.io/). Featuring a **Tech Noir** aesthetic, this tool provides a seamless, premium interface for power users who demand the quality and flexibility of a native media player for web-based streams.
 
-[Features](#features) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Usage](#usage) · [Configuration](#configuration) · [Architecture](#architecture)
+[Features](#features) · [Performance](#performance--reliability) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Usage](#usage) · [Architecture](#architecture)
 
 ## Features
 
-- **Live HLS Sniffer** — Monitors network requests via `webRequest` API and automatically detects `.m3u8` manifests and `application/ x-mpegurl` responses. Sorts streams by type (Master / Media / Unknown).
-- **Browser Identity Passthrough** — Forwards Cookies and User-Agent to MPV via a Netscape cookie jar. Required for authenticated streams and DRM-protected sources.
+- **Zero-Latency HLS Sniffer** — High-efficiency implementation using `onHeadersReceived` and type-filtering. Minimizes CPU wakeups by surgically ignoring non-media assets (images, CSS, scripts) while automatically detecting `.m3u8` manifests and HLS MIME types.
+- **Deep Identity Passthrough** — Forwards full `User-Agent` strings and structured `Cookies` to MPV. Automatically generates a dynamic **Netscape HTTP Cookie Jar** to bypass aggressive CDN hotlink protections and handle authenticated sessions.
+- **Live Status Badge** — High-visibility crimson indicator with a real-time stream counter, providing instant feedback when HLS signatures are detected.
 - **Context Menu Dispatch** — Right-click any page, link, video, or audio element to send it directly to MPV.
 - **Configurable MPV Flags** — Override `--hwdec`, `--vo`, `--ytdl-format`, and add custom CLI flags per-session.
-- **Native Messaging Host** — Python bridge (`mpv_bridge. py`) that spawns MPV as a detached process using the Chrome Native Messaging protocol (stdio, 4-byte LE length prefix).
-- **Cyberpunk Terminal UI** — CRT scanline overlay, noise texture, crimson/obsidian color scheme, mechanical toggle switches, animated stream list.
+- **Cyberpunk Terminal UI** — CRT scanline overlay, noise texture, crimson/obsidian color scheme, mechanical toggle switches, and animated stream list.
+
+## Performance & Reliability
+
+- **Ghost Process Prevention** — Integrated `socket-timeout=30` for `yt-dlp` ensures that background processes self-terminate if a connection is lost or MPV fails, preventing resource leaks.
+- **Self-Cleaning Workspace** — The native host automatically purges temporary session files and stale cookie jars older than one hour.
+- **SPA-Ready State Management** — Intelligent memory management automatically flushes stream caches on tab reloads and URL changes, maintaining a near-zero RAM footprint for long browsing sessions.
+- **Detached Execution** — Spawns MPV in a new process session, allowing the player to persist even if the browser is closed.
 
 ## Prerequisites
 
-- [MPV](https://mpv. io/) installed on your system
+- [MPV](https://mpv.io/) installed on your system
 - A Chromium-based browser (Chrome, Chromium, Brave, Edge)
 - Python 3.x
 - Extension ID from `chrome://extensions` (or `brave://extensions`)
@@ -39,10 +46,10 @@ cd native_host/
 ./install.sh
 ```
 
-The installer auto-detects browser config directories and registers `mpv_bridge. py` as a Native Messaging host. It will prompt for your Extension ID.
+The installer auto-detects browser config directories and registers `mpv_bridge.py` as a Native Messaging host. It will prompt for your Extension ID.
 
 > [!NOTE]
-> Find your Extension ID at the top of `chrome://extensions` under the extension name. On Firefox, use `web-ext build` to package the extension and check `manifest.json` for the ID.
+> Find your Extension ID at the top of `chrome://extensions` under the extension name.
 
 ### 3. Reload the Extension
 
@@ -64,44 +71,6 @@ After installing the host, click the **reload** icon on the extension card in `c
 
 Right-click anywhere on a page (page, link, video, or audio) and select **[ DISPATCH_TO_MPV ]** to send the URL directly to MPV.
 
-### Keyboard Shortcuts
-
-No global shortcuts are defined by default. You can add them via **Keyboard Shortcuts** in `chrome://extensions` (under the extension card's menu).
-
-## Configuration
-
-Open the extension's **Console Config** (gear icon in the popup or via the extension card menu) to adjust settings.
-
-### Core System
-
-| Setting | Description | Default |
-|---|---|---|
-| `EXECUTABLE_PATH` | Absolute path to the MPV binary | `/usr/bin/mpv` |
-| `NATIVE_HOST_ID` | Must match the installed JSON manifest | `com.mpvbridge.native` |
-| `PING_HOST` | Tests connection to the native messaging host | — |
-
-### Network & Privacy
-
-| Setting | Description |
-|---|---|
-| `HLS_SNIFFER_ENABLED` | Intercept `.m3u8` manifests via webRequest API |
-| `PASS_BROWSER_IDENTITY` | Forward Cookies and User-Agent to MPV. Required for authenticated/DRM streams |
-
-### Video Renderer (Advanced Mode)
-
-| Setting | Description |
-|---|---|
-| `HW_DECODER [--hwdec]` | Hardware decoder: `auto`, `vaapi`, `nvdec`, `videotoolbox`, `no` |
-| `VIDEO_OUTPUT [--vo]` | Video output: `gpu`, `gpu-next`, `x11`, `null` |
-| `ALWAYS_ON_TOP [--ontop]` | Keep MPV window above all others |
-
-### Advanced Flags
-
-| Setting | Description |
-|---|---|
-| `YTDL_FORMAT [--ytdl-format]` | yt-dlp format selector, e.g. `bestvideo[height<=1080]+bestaudio/best` |
-| `CUSTOM_CLI_FLAGS` | Additional raw flags passed to MPV, one per line |
-
 ## Architecture
 
 ```
@@ -111,26 +80,13 @@ Extension Popup ◄─────── chrome.runtime ───────►
                                     chrome.runtime.sendNativeMessage
                                                         │  stdio (4-byte LE length)
                                                         ▼
-                                              Native Host (mpv_bridge.py)
+                                               Native Host (mpv_bridge.py)
                                                         │  Popen(cmd)
                                                         ▼
-                                              MPV Player (detached process)
+                                               MPV Player (detached process)
 ```
 
-The popup communicates with the service worker via `chrome.runtime.sendMessage`. The service worker uses `chrome.webRequest` to detect `.m3u8` URLs and stores per-tab state in a hybrid in-memory + `chrome.storage.session` cache. When the user triggers a dispatch, the service worker sends a JSON message to `mpv_bridge.py` via Chrome's Native Messaging protocol. The Python host builds an MPV command line — including yt-dlp options, a Netscape cookie jar, and user-configured flags — then spawns MPV detached with `subprocess.Popen`.
-
-### Key Files
-
-| File | Role |
-|---|---|
-| `manifest.json` | Extension manifest (Manifest V3, permissions, icon set) |
-| `background.js` | Service worker: config, HLS sniffer, badge controller, context menu, native dispatcher |
-| `popup.js` / `popup.html` | Popup UI: stream list, dispatch buttons, toast notifications |
-| `options.js` / `options.html` | Settings console with advanced renderer and flag overrides |
-| `popup.css` / `options.css` | Cyberpunk terminal styling (CRT, noise, crimson/obsidian) |
-| `native_host/mpv_bridge.py` | Native Messaging host: JSON over stdio, spawns MPV |
-| `native_host/install.sh` | Wrapper that runs the TUI installer |
-| `native_host/installer_tui.py` | Interactive TUI for browser manifest registration |
+The popup communicates with the service worker via `chrome.runtime.sendMessage`. The service worker uses optimized `chrome.webRequest` listeners to detect `.m3u8` URLs and stores per-tab state in a hybrid in-memory + `chrome.storage.session` cache. When a dispatch is triggered, the service worker sends structured JSON metadata (including identity headers and cookies) to `mpv_bridge.py` via Chrome's Native Messaging protocol. The Python host constructs a hardened MPV command line, generates a temporary Netscape cookie jar, and spawns MPV as a detached process.
 
 ## License
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MV3</title>
+  <title>MV3 - HUD</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
@@ -12,62 +12,70 @@
 <body>
   <div class="crt-overlay"></div>
   <div class="noise-bg"></div>
+  <div class="scanner-line"></div>
 
-  <header id="popup-header">
-    <div class="brand">
-      <div class="brand-icon">
-        <div class="icon-core"></div>
-        <div class="spark-fx"></div>
+  <div class="hud-container">
+    <div class="hud-frame-top">
+      <div class="hud-brand">
+        <svg class="target-reticle" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="var(--crimson)" stroke-width="2" stroke-dasharray="10 5" />
+          <path d="M 50 0 L 50 20 M 50 80 L 50 100 M 0 50 L 20 50 M 80 50 L 100 50" stroke="var(--crimson)" stroke-width="4" />
+        </svg>
+        <h1 class="neon-text">MV3 // <span id="title-bridge">BRIDGE</span></h1>
       </div>
-      <h1 class="neon-text">MV3 // BRIDGE</h1>
-    </div>
-    <button id="btn-options" class="cyber-btn-icon" title="Open Console Config">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <circle cx="12" cy="11" r="3"/>
-      </svg>
-    </button>
-  </header>
-
-  <main id="popup-main">
-    <!-- Target Page Info -->
-    <section class="panel">
-      <div class="panel-label">SYS.TARGET_PAGE</div>
-      <div class="page-readout">
-        <span id="page-url" class="data-text truncate">—</span>
-        <button id="btn-send-page" class="cyber-btn mini">
-          <span class="btn-bracket">[</span> INJECT <span class="btn-bracket">]</span>
+      <div class="hud-controls">
+        <button id="btn-options" class="hud-btn-icon" title="SYS.CONFIG">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">
+            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+          </svg>
         </button>
       </div>
-    </section>
+    </div>
+
+    <!-- Target Source Panel -->
+    <div class="hud-panel primary-target">
+      <div class="panel-deco-lines"></div>
+      <div class="hud-label">
+        <span class="glitch-txt" data-text="PRM_TRGT">PRM_TRGT</span> // PAGE_SOURCE
+      </div>
+      <div class="target-readout">
+        <div class="target-data">
+          <span class="data-prefix">URL:</span>
+          <span id="page-url" class="data-text truncate">—</span>
+        </div>
+        <button id="btn-send-page" class="hud-action-btn">
+          <div class="btn-scan"></div>
+          [ OVERRIDE ]
+        </button>
+      </div>
+    </div>
 
     <!-- Network Stream Intercepts -->
-    <section class="panel stream-panel">
-      <div class="panel-header">
-        <div class="panel-label">SYS.INTERCEPTED_STREAMS</div>
-        <div class="badge-count" id="stream-count">00</div>
+    <div class="hud-panel intercept-grid">
+      <div class="hud-label split-label">
+        <span>INTERCEPT_SIG</span>
+        <span class="hud-badge" id="stream-count">00</span>
       </div>
 
-      <div id="stream-list" class="stream-list hidden">
+      <div id="stream-list" class="data-card-container hidden">
         <!-- Populated via JS -->
       </div>
 
       <div id="stream-warning-banner" class="marquee-container hidden">
         <div class="marquee-content">
-          <span>// WARNING: HLS SNIFFER MAY DETECT BACKGROUND VIDEO THUMBNAILS AS FALSE POSITIVES. USE PAGE INJECTION FOR MAIN MEDIA. //</span>
-          <span>// WARNING: HLS SNIFFER MAY DETECT BACKGROUND VIDEO THUMBNAILS AS FALSE POSITIVES. USE PAGE INJECTION FOR MAIN MEDIA. //</span>
+          <span>// WARN: THUMBNAIL FALSE-POSITIVES POSSIBLE // WARN: THUMBNAIL FALSE-POSITIVES POSSIBLE // </span>
+          <span>// WARN: THUMBNAIL FALSE-POSITIVES POSSIBLE // WARN: THUMBNAIL FALSE-POSITIVES POSSIBLE // </span>
         </div>
       </div>
 
-      <div id="empty-state" class="empty-state">
-        <div class="scanline"></div>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <p>NO HLS SIGNATURES DETECTED</p>
+      <div id="empty-state" class="hud-empty">
+        <div class="radar">
+          <div class="radar-sweep"></div>
+        </div>
+        <div class="status-txt">AWAITING_HLS_SIGNATURES</div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <div id="toast-container"></div>
   <script src="popup.js"></script>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MV3 - Configuration</title>
+  <title>MV3 - SYS.CONFIG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
@@ -12,146 +12,198 @@
 <body>
   <div class="crt-overlay"></div>
   <div class="noise-bg"></div>
+  <div class="scanner-line"></div>
 
   <div class="container">
-    <header class="header">
-      <div class="brand">
-        <div class="brand-icon">
-          <div class="icon-core"></div>
+    <div class="hud-frame-top">
+      <div class="hud-brand">
+        <svg class="target-reticle" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="var(--crimson)" stroke-width="2" stroke-dasharray="10 5" />
+          <path d="M 50 0 L 50 20 M 50 80 L 50 100 M 0 50 L 20 50 M 80 50 L 100 50" stroke="var(--crimson)" stroke-width="4" />
+        </svg>
+        <div class="brand-text">
+          <div style="display: flex; align-items: baseline;">
+            <h1 class="neon-text">MV3 // BRIDGE</h1>
+            <span id="app-version" class="version-txt"></span>
+          </div>
+          <p class="subtitle">SYS.CONFIG // ADVANCED PARAMETERS</p>
         </div>
-        <h1>SYS.CONSOLE_CONFIG</h1>
       </div>
-      <p class="subtitle">ADVANCED BRIDGE PARAMETERS</p>
-    </header>
+    </div>
 
     <main class="grid">
-      <!-- System Core -->
-      <section class="panel">
-        <div class="panel-label">CORE.SYSTEM</div>
+      <!-- Network & Privacy -->
+      <section class="hud-panel">
+        <div class="panel-deco-lines"></div>
+        <div class="hud-label">
+          <span class="glitch-txt" data-text="NET.INT">NET.INT</span> // INTERCEPT
+        </div>
         <div class="panel-content">
-          
+          <div class="field switch-field">
+            <div class="switch-info">
+              <label>HLS_SNIFFER_ENABLED</label>
+              <p class="field-hint">Intercept .m3u8 manifests via webRequest API.</p>
+            </div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-sniffer">
+              <div class="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+
+          <div class="field switch-field">
+            <div class="switch-info">
+              <label>PASS_BROWSER_IDENTITY</label>
+              <p class="field-hint">Forward Cookies and User-Agent to MPV. Required for DRM.</p>
+            </div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-pass-identity">
+              <div class="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+
+          <div class="field switch-field">
+            <div class="switch-info">
+              <label>FORCE_H264_AVC [h264ify]</label>
+              <p class="field-hint">Block VP8/VP9/AV1 in browser. Reduces CPU usage.</p>
+            </div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-force-h264">
+              <div class="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Status -->
+      <section class="hud-panel">
+        <div class="panel-deco-lines"></div>
+        <div class="hud-label">
+          <span class="glitch-txt" data-text="SYS.STAT">SYS.STAT</span> // DIAGNOSTICS
+        </div>
+        <div class="panel-content">
+          <button id="btn-test-host" class="hud-action-btn primary w-full">
+            <div class="btn-scan"></div>
+            [ PING NATIVE HOST ]
+          </button>
+          <div id="test-result" class="vfd-status mt-2"></div>
+
+          <div class="field switch-field mt-4" style="border-top: 1px solid var(--crimson-dim); padding-top: 20px;">
+            <div class="switch-info">
+              <label>ENABLE_ADVANCED_MODE</label>
+              <p class="field-hint">Reveal low-level renderer and kernel overrides.</p>
+            </div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-advanced">
+              <div class="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Core (Advanced) -->
+      <section class="hud-panel advanced-panel">
+        <div class="panel-deco-lines"></div>
+        <div class="hud-label">
+          <span class="glitch-txt" data-text="CORE.CFG">CORE.CFG</span> // KERNEL
+        </div>
+        <div class="panel-content">
           <div class="field">
             <label for="input-mpv-path">EXECUTABLE_PATH</label>
-            <input type="text" id="input-mpv-path" class="cyber-input" spellcheck="false" placeholder="/usr/bin/mpv">
-            <p class="field-hint">Absolute path to the MPV binary.</p>
+            <input type="text" id="input-mpv-path" class="hud-input" spellcheck="false" placeholder="/usr/bin/mpv">
+            <p class="field-hint">Absolute path to MPV binary.</p>
           </div>
 
           <div class="field">
             <label for="input-host-name">NATIVE_HOST_ID</label>
-            <input type="text" id="input-host-name" class="cyber-input" spellcheck="false" placeholder="com.mpvbridge.native">
-            <p class="field-hint">Must match the installed JSON manifest.</p>
+            <input type="text" id="input-host-name" class="hud-input" spellcheck="false" placeholder="com.mpvbridge.native">
+            <p class="field-hint">Match installed JSON manifest.</p>
           </div>
-
-          <div class="field mt-4">
-            <label class="cyber-toggle">
-              <input type="checkbox" id="toggle-advanced">
-              <div class="toggle-track"><div class="toggle-thumb"></div></div>
-              <span class="toggle-label" style="color: var(--crimson);">[ ENABLE_ADVANCED_MODE ]</span>
-            </label>
-            <p class="field-hint">Reveal low-level renderer and flag overrides.</p>
-          </div>
-
-          <button id="btn-test-host" class="cyber-btn w-full mt-4">
-            <span class="btn-bracket">[</span> PING_HOST <span class="btn-bracket">]</span>
-          </button>
-          <div id="test-result" class="field-hint mt-2"></div>
-
-        </div>
-      </section>
-
-      <!-- Network & Privacy -->
-      <section class="panel">
-        <div class="panel-label">NET.INTERCEPT</div>
-        <div class="panel-content">
-
-          <label class="cyber-toggle">
-            <input type="checkbox" id="toggle-sniffer">
-            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-            <span class="toggle-label">HLS_SNIFFER_ENABLED</span>
-          </label>
-          <p class="field-hint mb-4">Intercept .m3u8 manifests via webRequest API.</p>
-
-          <label class="cyber-toggle">
-            <input type="checkbox" id="toggle-pass-identity">
-            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-            <span class="toggle-label">PASS_BROWSER_IDENTITY</span>
-          </label>
-          <p class="field-hint mb-4">Forward Cookies and User-Agent to MPV. Required for authenticated/DRM streams.</p>
-
-          <label class="cyber-toggle">
-            <input type="checkbox" id="toggle-force-h264">
-            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-            <span class="toggle-label">FORCE_H264_AVC [h264ify]</span>
-          </label>
-          <p class="field-hint">Block VP8/VP9/AV1 in browser. Reduces CPU usage. (Does not affect MPV).</p>
-
         </div>
       </section>
 
       <!-- Video Rendering -->
-      <section class="panel advanced-panel">
-        <div class="panel-label">VIDEO.RENDERER</div>
+      <section class="hud-panel advanced-panel">
+        <div class="panel-deco-lines"></div>
+        <div class="hud-label">
+          <span class="glitch-txt" data-text="VID.RNDR">VID.RNDR</span> // OUTPUT
+        </div>
         <div class="panel-content">
-
           <div class="field">
             <label for="input-hwdec">HW_DECODER [--hwdec]</label>
-            <select id="input-hwdec" class="cyber-select">
-              <option value="">[ Inherit from mpv.conf ]</option>
-              <option value="auto">auto (Standard Default)</option>
+            <select id="input-hwdec" class="hud-select">
+              <option value="">[ Inherit ]</option>
+              <option value="auto">auto (Default)</option>
               <option value="auto-safe">auto-safe</option>
-              <option value="vaapi">vaapi (Intel/AMD Linux)</option>
+              <option value="vaapi">vaapi (Linux)</option>
               <option value="nvdec">nvdec (NVIDIA)</option>
               <option value="videotoolbox">videotoolbox (macOS)</option>
-              <option value="no">no (Software Only)</option>
+              <option value="no">no (Software)</option>
             </select>
           </div>
 
           <div class="field">
             <label for="input-vo">VIDEO_OUTPUT [--vo]</label>
-            <select id="input-vo" class="cyber-select">
-              <option value="">[ Inherit from mpv.conf ]</option>
+            <select id="input-vo" class="hud-select">
+              <option value="">[ Inherit ]</option>
               <option value="gpu">gpu (Standard)</option>
-              <option value="gpu-next">gpu-next (Modern/HDR)</option>
-              <option value="x11">x11 (Legacy Linux)</option>
+              <option value="gpu-next">gpu-next (Modern)</option>
+              <option value="x11">x11 (Legacy)</option>
               <option value="null">null (Audio Only)</option>
             </select>
           </div>
 
-          <label class="cyber-toggle mt-4">
-            <input type="checkbox" id="toggle-ontop">
-            <div class="toggle-track"><div class="toggle-thumb"></div></div>
-            <span class="toggle-label">ALWAYS_ON_TOP [--ontop]</span>
-          </label>
-
+          <div class="field switch-field mt-4">
+            <div class="switch-info">
+              <label>ALWAYS_ON_TOP [--ontop]</label>
+            </div>
+            <label class="hud-toggle">
+              <input type="checkbox" id="toggle-ontop">
+              <div class="toggle-track">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
         </div>
       </section>
 
       <!-- Advanced Flags -->
-      <section class="panel grid-span-full advanced-panel">
-        <div class="panel-label">SYS.ADVANCED_FLAGS</div>
+      <section class="hud-panel grid-span-full advanced-panel">
+        <div class="panel-deco-lines"></div>
+        <div class="hud-label">
+          <span class="glitch-txt" data-text="SYS.FLAGS">SYS.FLAGS</span> // RAW PARAMS
+        </div>
         <div class="panel-content">
           <div class="field">
             <label for="input-ytdl-format">YTDL_FORMAT [--ytdl-format]</label>
-            <input type="text" id="input-ytdl-format" class="cyber-input" spellcheck="false" placeholder="Leave blank for defaults">
+            <input type="text" id="input-ytdl-format" class="hud-input" spellcheck="false" placeholder="Leave blank for defaults">
             <p class="field-hint">e.g. bestvideo[height&lt;=1080]+bestaudio/best</p>
           </div>
 
           <div class="field">
             <label for="input-default-flags">CUSTOM_CLI_FLAGS</label>
-            <textarea id="input-default-flags" class="cyber-input" rows="3" spellcheck="false" placeholder="--fs&#10;--volume=80"></textarea>
+            <textarea id="input-default-flags" class="hud-input" rows="3" spellcheck="false" placeholder="--fs&#10;--volume=80"></textarea>
             <p class="field-hint">Additional raw flags passed to MPV. One per line.</p>
           </div>
         </div>
       </section>
-
     </main>
 
     <footer class="footer">
-      <button id="btn-reset" class="cyber-btn ghost">
-        <span class="btn-bracket">[</span> FACTORY_RESET <span class="btn-bracket">]</span>
+      <button id="btn-reset" class="hud-action-btn danger">
+        <div class="btn-scan"></div>
+        [ FACTORY RESET ]
       </button>
-      <button id="btn-save" class="cyber-btn primary">
-        <span class="btn-bracket">[</span> COMMIT_CHANGES <span class="btn-bracket">]</span>
+      <button id="btn-save" class="hud-action-btn primary">
+        <div class="btn-scan"></div>
+        [ COMMIT CHANGES ]
       </button>
     </footer>
 

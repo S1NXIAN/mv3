@@ -21,6 +21,12 @@ document.addEventListener("DOMContentLoaded", loadSettings);
 /* ── Load ── */
 async function loadSettings() {
   const config = await chrome.storage.sync.get(DEFAULTS);
+  
+  const manifest = chrome.runtime.getManifest();
+  const versionEl = document.getElementById("app-version");
+  const versionStr = `v${manifest.version}`;
+  versionEl.textContent = versionStr;
+  initVersionGlitch(versionEl, versionStr);
 
   document.getElementById("input-mpv-path").value = config.mpvPath;
   document.getElementById("input-host-name").value = config.hostName;
@@ -34,10 +40,27 @@ async function loadSettings() {
   
   const advToggle = document.getElementById("toggle-advanced");
   advToggle.checked = config.advancedMode;
-  document.body.classList.toggle("advanced-mode", config.advancedMode);
+  
+  const advPanels = document.querySelectorAll(".advanced-panel");
+  advPanels.forEach(el => {
+    if (!config.advancedMode) el.style.display = "none";
+  });
   
   advToggle.addEventListener("change", (e) => {
-    document.body.classList.toggle("advanced-mode", e.target.checked);
+    const isChecked = e.target.checked;
+    advPanels.forEach((el) => {
+      if (isChecked) {
+        el.style.display = "block";
+        el.classList.remove("glitch-out");
+        el.classList.add("glitch-in");
+      } else {
+        el.classList.remove("glitch-in");
+        el.classList.add("glitch-out");
+        setTimeout(() => {
+          if (!advToggle.checked) el.style.display = "none";
+        }, 300);
+      }
+    });
   });
 
   const flagsStr = Array.isArray(config.defaultFlags)
@@ -102,7 +125,7 @@ async function resetSettings() {
 async function testConnection() {
   const resultEl = document.getElementById("test-result");
   resultEl.textContent = "TESTING...";
-  resultEl.className = "field-hint test-result";
+  resultEl.className = "vfd-status";
 
   const hostName = document.getElementById("input-host-name").value.trim() || DEFAULTS.hostName;
 
@@ -112,10 +135,10 @@ async function testConnection() {
     (response) => {
       if (chrome.runtime.lastError) {
         resultEl.textContent = "✗ " + chrome.runtime.lastError.message;
-        resultEl.className = "field-hint test-result error";
+        resultEl.className = "vfd-status error";
       } else {
         resultEl.textContent = "✓ CONNECTED [" + (response.python || "HOST") + "]";
-        resultEl.className = "field-hint test-result success";
+        resultEl.className = "vfd-status success";
       }
     }
   );
@@ -127,4 +150,34 @@ function flashToast(message) {
   toast.textContent = message;
   toast.classList.remove("hidden");
   setTimeout(() => toast.classList.add("hidden"), 2000);
+}
+
+/* ── UI Helpers ── */
+
+function initVersionGlitch(element, finalString) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+  
+  function triggerGlitch() {
+    element.classList.add("is-glitching");
+    let iterations = 0;
+    const interval = setInterval(() => {
+      element.textContent = finalString.split("").map((letter, index) => {
+        if (Math.random() > 0.5) return finalString[index];
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join("");
+      iterations++;
+      
+      if (iterations > 6) { // Run for about 6 frames (180ms)
+        clearInterval(interval);
+        element.textContent = finalString;
+        element.classList.remove("is-glitching");
+        
+        // Schedule next glitch between 3 and 10 seconds
+        setTimeout(triggerGlitch, 3000 + Math.random() * 7000);
+      }
+    }, 30);
+  }
+  
+  // Start first glitch between 2 and 5 seconds
+  setTimeout(triggerGlitch, 2000 + Math.random() * 3000);
 }

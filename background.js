@@ -41,10 +41,10 @@ async function getConfig() {
 
 // Dynamic H264ify Management
 async function syncH264ify() {
-  const config = await getConfig();
-  const SCRIPT_ID = "h264ify-shield";
-
   try {
+    const config = await getConfig();
+    const SCRIPT_ID = "h264ify-shield";
+
     const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] });
     
     if (config.forceH264) {
@@ -256,12 +256,11 @@ async function updateBadge(tabId, state) {
   try {
     const count = state.urls.length;
     const iconPath = count > 0 ? ICON_ACTIVE : ICON_IDLE;
-    const badgeText = count > 0 ? count.toString() : "";
+    const badgeText = ""; // User requested to remove the badge text to reduce distraction
     
     await Promise.all([
       chrome.action.setIcon({ path: iconPath, tabId }),
-      chrome.action.setBadgeText({ text: badgeText, tabId }),
-      chrome.action.setBadgeBackgroundColor({ color: "#FF003C", tabId })
+      chrome.action.setBadgeText({ text: badgeText, tabId })
     ]);
   } catch (_) {}
 }

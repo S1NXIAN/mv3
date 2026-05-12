@@ -14,6 +14,11 @@ async function init() {
     chrome.runtime.openOptionsPage();
   });
 
+  const bridgeEl = document.getElementById("title-bridge");
+  if (bridgeEl) {
+    initRandomGlitch(bridgeEl, "BRIDGE");
+  }
+
   // Get current tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
@@ -23,6 +28,7 @@ async function init() {
   const displayUrl = truncateUrl(tab.url, 48);
   pageUrlEl.textContent = displayUrl;
   pageUrlEl.title = tab.url;
+  applyScrambleCopy(pageUrlEl, tab.url);
 
   // "Send Page" button
   const btnSendPage = document.getElementById("btn-send-page");
@@ -85,50 +91,47 @@ function renderStreams(state) {
   );
 
   sorted.forEach((entry, index) => {
-    const item = document.createElement("div");
-    item.className = "stream-item" + (entry.type === "master" ? " is-master" : "");
-    item.style.animationDelay = `${index * 40}ms`;
+    const card = document.createElement("div");
+    card.className = "data-card" + (entry.type === "master" ? " master" : "");
+    card.style.animationDelay = `${index * 40}ms`;
 
-    // Type badge
+    const header = document.createElement("div");
+    header.className = "card-header";
+
     const typeBadge = document.createElement("span");
-    typeBadge.className = `stream-type type-${entry.type}`;
-    typeBadge.textContent = entry.type === "master" ? "⚡ Master"
-                          : entry.type === "media"  ? "📺 Media"
-                          : "❓ Unknown";
+    typeBadge.className = "card-type";
+    typeBadge.textContent = entry.type === "master" ? "MASTER_FRQ"
+      : entry.type === "media" ? "MEDIA_FRQ"
+        : "UNKNOWN_SIG";
 
-    // URL — click to copy
-    const urlSpan = document.createElement("span");
-    urlSpan.className = "stream-url copyable";
+    header.appendChild(typeBadge);
+
+    const urlSpan = document.createElement("div");
+    urlSpan.className = "card-url";
     urlSpan.textContent = truncateUrl(entry.url, 40);
     urlSpan.title = "Click to copy URL";
-    urlSpan.addEventListener("click", () => {
-      navigator.clipboard.writeText(entry.url).then(() => {
-        const original = urlSpan.textContent;
-        urlSpan.textContent = "COPIED ✓";
-        urlSpan.classList.add("copied");
-        setTimeout(() => {
-          urlSpan.textContent = original;
-          urlSpan.classList.remove("copied");
-        }, 1000);
-      });
+
+    applyScrambleCopy(urlSpan, entry.url);
+
+    const strip = document.createElement("div");
+    strip.className = "inject-strip";
+
+    const execBtn = document.createElement("button");
+    execBtn.className = "hud-execute-btn";
+    execBtn.id = `btn-send-stream-${index}`;
+    execBtn.textContent = "[ EXECUTE INJECTION ]";
+
+    execBtn.addEventListener("click", () => {
+      sendUrl(entry.url, execBtn);
     });
 
-    // Send button
-    const sendBtn = document.createElement("button");
-    sendBtn.className = "cyber-btn mini";
-    sendBtn.id = `btn-send-stream-${index}`;
-    sendBtn.title = "Send to MPV";
-    sendBtn.appendChild(_bracketSpan("["));
-    sendBtn.appendChild(document.createTextNode(" INJECT "));
-    sendBtn.appendChild(_bracketSpan("]"));
-    sendBtn.addEventListener("click", () => {
-      sendUrl(entry.url, sendBtn);
-    });
+    strip.appendChild(execBtn);
 
-    item.appendChild(typeBadge);
-    item.appendChild(urlSpan);
-    item.appendChild(sendBtn);
-    listEl.appendChild(item);
+    card.appendChild(header);
+    card.appendChild(urlSpan);
+    card.appendChild(strip);
+
+    listEl.appendChild(card);
   });
 }
 
@@ -138,20 +141,25 @@ function sendUrl(url, btnEl) {
   if (btnEl.classList.contains("sending")) return;
 
   btnEl.classList.add("sending");
-  const savedNodes = Array.from(btnEl.childNodes).map(n => n.cloneNode(true));
-  btnEl.replaceChildren(_bracketSpan("["), document.createTextNode(" DISPATCHING "), _bracketSpan("]"));
+  const originalHtml = btnEl.innerHTML;
+
+  if (btnEl.classList.contains("hud-action-btn")) {
+    btnEl.innerHTML = `<div class="btn-scan"></div>[ TX... ]`;
+  } else {
+    btnEl.textContent = "[ TRANSMITTING ]";
+  }
 
   chrome.runtime.sendMessage(
     { action: "sendToMpv", url },
     (result) => {
       btnEl.classList.remove("sending");
-      btnEl.replaceChildren(...savedNodes);
+      btnEl.innerHTML = originalHtml;
 
       if (result && result.success) {
-        showToast("[ STATUS: DISPATCH_SUCCESS ]", "success");
+        showToast("INJECTION_SUCCESS", "success");
       } else {
-        const errMsg = (result && result.error) || "CONNECTION_FAILURE";
-        showToast(`[ STATUS: ${errMsg.toUpperCase()} ]`, "error");
+        const errMsg = (result && result.error) || "TX_FAILURE";
+        showToast(`ERR: ${errMsg.toUpperCase()}`, "error");
       }
     }
   );
@@ -195,4 +203,80 @@ function _bracketSpan(char) {
   span.className = "btn-bracket";
   span.textContent = char;
   return span;
+}
+
+/* ── UI Helpers ── */
+
+function applyScrambleCopy(element, textToCopy) {
+  element.style.cursor = "pointer";
+  element.addEventListener("click", () => {
+    if (element.classList.contains("url-glitch")) return;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const original = element.dataset.original || element.textContent;
+      element.dataset.original = original;
+      element.classList.add("url-glitch");
+
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+      const finalString = "COPIED_TO_CLIPBOARD";
+      let iterationsIn = 0;
+
+      const intervalIn = setInterval(() => {
+        element.textContent = finalString.split("").map((letter, index) => {
+          if (index < iterationsIn) return finalString[index];
+          return chars[Math.floor(Math.random() * chars.length)];
+        }).join("");
+
+        iterationsIn += 1;
+        if (iterationsIn > finalString.length) {
+          clearInterval(intervalIn);
+          element.textContent = finalString;
+
+          // Pause to let user read, then scramble back to original
+          setTimeout(() => {
+            let iterationsOut = 0;
+            const intervalOut = setInterval(() => {
+              element.textContent = original.split("").map((letter, index) => {
+                if (index < iterationsOut) return original[index];
+                return chars[Math.floor(Math.random() * chars.length)];
+              }).join("");
+
+              iterationsOut += 1; // Resolve original URL slightly slower
+              if (iterationsOut > original.length + 1) {
+                clearInterval(intervalOut);
+                element.textContent = original;
+                element.classList.remove("url-glitch");
+              }
+            }, 25);
+          }, 1000);
+        }
+      }, 45);
+    });
+  });
+}
+
+function initRandomGlitch(element, finalString) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+  
+  function triggerGlitch() {
+    element.classList.add("is-glitching");
+    let iterations = 0;
+    const interval = setInterval(() => {
+      element.textContent = finalString.split("").map((letter, index) => {
+        if (Math.random() > 0.5) return finalString[index];
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join("");
+      iterations++;
+      
+      if (iterations > 6) {
+        clearInterval(interval);
+        element.textContent = finalString;
+        element.classList.remove("is-glitching");
+        
+        setTimeout(triggerGlitch, 3000 + Math.random() * 7000);
+      }
+    }, 30);
+  }
+  
+  setTimeout(triggerGlitch, 2000 + Math.random() * 3000);
 }

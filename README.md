@@ -35,10 +35,17 @@ Because this extension interfaces directly with a desktop application (`mpv`), i
 4. Click **Load unpacked** and select the root directory of this repository.
 
 ### 2. Install the Native Messaging Host
-To allow the extension to communicate with `mpv`, you must install the native host manifest JSON file on your operating system.
+To allow the extension to communicate with `mpv`, you must register the native host script. This project includes an interactive installer for Linux.
 
-> [!IMPORTANT]
-> The exact location for the native host JSON file depends on your OS and browser. For Chrome on Linux, the manifest usually goes to `~/.config/google-chrome/NativeMessagingHosts/com.mpvbridge.native.json`. Make sure the python/shell script specified in the manifest has executable permissions!
+1. Open your terminal and navigate to the `native_host` directory.
+2. Run the installer script:
+   ```bash
+   ./install.sh
+   ```
+3. The installer will automatically detect compatible browsers (Chrome, Chromium, Brave). Use the arrow keys and **Space** to select your browser(s), then press **Enter**.
+4. When prompted, enter your **Extension ID**. You can find this in your browser's `chrome://extensions` page under the MV3 entry.
+
+The script will automatically set the necessary permissions and install the manifest JSON to the correct system location.
 
 ### 3. Verify Connection
 1. Open the extension's **SYS.CONFIG** terminal (Options Page).

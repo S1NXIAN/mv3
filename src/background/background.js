@@ -158,8 +158,7 @@ const HLS_MIME_TYPES = [
 
 chrome.webRequest.onCompleted.addListener(
   handleRequestCompleted,
-  { urls: ["*://*/*.m3u8", "*://*/*.m3u8?*", "*://*/*.m3u8#*"] },
-  ["responseHeaders"]
+  { urls: ["*://*/*.m3u8", "*://*/*.m3u8?*", "*://*/*.m3u8#*"] }
 );
 
 chrome.webRequest.onHeadersReceived.addListener(
@@ -241,15 +240,15 @@ async function classifyAndStore(tabId, url) {
  * ────────────────────────────────────────────── */
 
 const ICON_IDLE = {
-  16: "icons/idle/icon16.png",
-  48: "icons/idle/icon48.png",
-  128: "icons/idle/icon128.png",
+  16: "/icons/idle/icon16.png",
+  48: "/icons/idle/icon48.png",
+  128: "/icons/idle/icon128.png",
 };
 
 const ICON_ACTIVE = {
-  16: "icons/active/icon16.png",
-  48: "icons/active/icon48.png",
-  128: "icons/active/icon128.png",
+  16: "/icons/active/icon16.png",
+  48: "/icons/active/icon48.png",
+  128: "/icons/active/icon128.png",
 };
 
 async function updateBadge(tabId, state) {
@@ -262,7 +261,10 @@ async function updateBadge(tabId, state) {
       chrome.action.setIcon({ path: iconPath, tabId }),
       chrome.action.setBadgeText({ text: badgeText, tabId })
     ]);
-  } catch (_) {}
+    console.log(`[MV3 Bridge] Icon updated to ${count > 0 ? 'ACTIVE' : 'IDLE'} for tab ${tabId}`);
+  } catch (err) {
+    console.error("[MV3 Bridge] Failed to update badge:", err);
+  }
 }
 
 /* ──────────────────────────────────────────────

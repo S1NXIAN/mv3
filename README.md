@@ -16,6 +16,16 @@
 
 A powerful Manifest V3 browser extension that intercepts HLS video streams (`.m3u8`) and routes them directly to your local `mpv` media player using Native Messaging. Encased in a highly stylized, animated Cyberpunk Targeting HUD, it serves as a seamless bridge between the web and your desktop, fully supporting DRM-protected streams and advanced renderer overrides.
 
+## Screenshots
+
+<div align="center">
+  <img src="screenshots/ss1.png" width="400" alt="HUD Interface">
+  <img src="screenshots/ss2.png" width="400" alt="Stream Interception">
+  <br>
+  <img src="screenshots/ss3.png" width="400" alt="Basic Options">
+  <img src="screenshots/ss4.png" width="400" alt="Advanced Configuration">
+</div>
+
 ## Features
 
 - 🎯 **Network Stream Interception** - Sniffs traffic for HLS manifests using the powerful `webRequest` API.

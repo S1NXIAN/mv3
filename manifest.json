@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "MV3",
   "version": "1.1.0",
-  "description": "Intercept HLS streams and send them to MPV player via Native Messaging. Detects Master Playlists for quality selection.",
+  "description": "Cyberpunk-themed browser extension that routes HLS network streams and web videos directly to your local MPV media player.",
   "permissions": [
     "nativeMessaging",
     "webRequest",

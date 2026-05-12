@@ -51,7 +51,7 @@ async function syncH264ify() {
       if (existing.length === 0) {
         await chrome.scripting.registerContentScripts([{
           id: SCRIPT_ID,
-          js: ["h264ify.js"],
+          js: ["src/scripts/h264ify.js"],
           matches: ["<all_urls>"],
           runAt: "document_start",
           world: "MAIN",

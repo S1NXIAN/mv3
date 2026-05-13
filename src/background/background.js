@@ -2,10 +2,10 @@
  * MV3 — Service Worker
  *
  * Modules:
- *   1. Config loader
+ *   1. Config loader (with expiration)
  *   2. Per-tab state manager (Hybrid Cache + Session Storage)
- *   3. HLS sniffer (webRequest)
- *   4. Badge controller
+ *   3. HLS sniffer (webRequest) with debouncing
+ *   4. Badge controller (debounced to prevent flicker)
  *   5. Context menu
  *   6. Native messaging dispatcher
  *   7. Internal message router (popup ↔ SW)
@@ -14,7 +14,7 @@
 console.log("[MV3 Bridge] Service Worker BOOTING...");
 
 /* ──────────────────────────────────────────────
- * 1. CONFIG
+ * 1. CONFIG (with expiration)
  * ────────────────────────────────────────────── */
 
 const CONFIG_DEFAULTS = {
@@ -32,10 +32,16 @@ const CONFIG_DEFAULTS = {
 };
 
 let _configCache = null;
+let _configCacheTime = 0;
+const CONFIG_CACHE_TTL = 5000;
 
-async function getConfig() {
-  if (_configCache) return _configCache;
+async function getConfig(forceRefresh = false) {
+  const now = Date.now();
+  if (_configCache && !forceRefresh && (now - _configCacheTime) < CONFIG_CACHE_TTL) {
+    return _configCache;
+  }
   _configCache = await chrome.storage.sync.get(CONFIG_DEFAULTS);
+  _configCacheTime = now;
   return _configCache;
 }
 
@@ -46,7 +52,7 @@ async function syncH264ify() {
     const SCRIPT_ID = "h264ify-shield";
 
     const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] });
-    
+
     if (config.forceH264) {
       if (existing.length === 0) {
         await chrome.scripting.registerContentScripts([{
@@ -134,6 +140,10 @@ async function saveTabState(tabId) {
 }
 
 async function clearTabState(tabId) {
+  if (badgeUpdateTimeouts.has(tabId)) {
+    clearTimeout(badgeUpdateTimeouts.get(tabId));
+    badgeUpdateTimeouts.delete(tabId);
+  }
   stateCache.delete(tabId);
   try {
     if (chrome.storage && chrome.storage.session) {
@@ -217,11 +227,14 @@ async function classifyAndStore(tabId, url) {
         type = "media";
       }
     }
-  } catch (_) {}
+  } catch (_) {
+  } finally {
+    state.pending.delete(url);
+  }
 
-  state.pending.delete(url);
+  const currentState = stateCache.get(tabId);
+  if (currentState !== state) return;
 
-  if (stateCache.get(tabId) !== state) return;
   if (state._urlIndex.has(url)) return;
 
   state.urls.push({ url, type, timestamp: Date.now() });
@@ -232,11 +245,11 @@ async function classifyAndStore(tabId, url) {
   }
 
   await saveTabState(tabId);
-  await updateBadge(tabId, state);
+  debouncedBadgeUpdate(tabId, state);
 }
 
 /* ──────────────────────────────────────────────
- * 4. BADGE CONTROLLER
+ * 4. BADGE CONTROLLER (with debouncing)
  * ────────────────────────────────────────────── */
 
 const ICON_IDLE = {
@@ -251,17 +264,28 @@ const ICON_ACTIVE = {
   128: "/icons/active/icon128.png",
 };
 
+const badgeUpdateTimeouts = new Map();
+
+function debouncedBadgeUpdate(tabId, state) {
+  if (badgeUpdateTimeouts.has(tabId)) {
+    clearTimeout(badgeUpdateTimeouts.get(tabId));
+  }
+  badgeUpdateTimeouts.set(tabId, setTimeout(() => {
+    badgeUpdateTimeouts.delete(tabId);
+    updateBadge(tabId, state);
+  }, 250));
+}
+
 async function updateBadge(tabId, state) {
   try {
     const count = state.urls.length;
     const iconPath = count > 0 ? ICON_ACTIVE : ICON_IDLE;
-    const badgeText = ""; // User requested to remove the badge text to reduce distraction
-    
+    const badgeText = "";
+
     await Promise.all([
       chrome.action.setIcon({ path: iconPath, tabId }),
       chrome.action.setBadgeText({ text: badgeText, tabId })
     ]);
-    console.log(`[MV3 Bridge] Icon updated to ${count > 0 ? 'ACTIVE' : 'IDLE'} for tab ${tabId}`);
   } catch (err) {
     console.error("[MV3 Bridge] Failed to update badge:", err);
   }
@@ -338,7 +362,7 @@ async function getCookiesForUrl(url) {
 async function sendToMpv(url, extraFlags = [], referer = null) {
   const config = await getConfig();
   const dynamicFlags = [];
-  
+
   if (config.hwDec) dynamicFlags.push(`--hwdec=${config.hwDec}`);
   if (config.vo) dynamicFlags.push(`--vo=${config.vo}`);
   if (config.alwaysOnTop) dynamicFlags.push('--ontop');
@@ -366,6 +390,8 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
       (response) => {
         if (chrome.runtime.lastError) {
           resolve({ success: false, error: chrome.runtime.lastError.message });
+        } else if (response && response.status === 'error') {
+          resolve({ success: false, error: response.message || 'Unknown error' });
         } else {
           resolve({ success: true, response });
         }
@@ -380,11 +406,19 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "getTabState") {
+    if (typeof message.tabId !== 'number' || message.tabId < 0) {
+      sendResponse({ urls: [], hasMaster: false });
+      return false;
+    }
     getTabState(message.tabId).then(state => sendResponse(state));
     return true;
   }
 
   if (message.action === "sendToMpv") {
+    if (!message.url || typeof message.url !== 'string') {
+      sendResponse({ success: false, error: 'Invalid URL' });
+      return false;
+    }
     chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       const referer = (tab && tab.url) || message.url;
       sendToMpv(message.url, message.flags || [], referer)

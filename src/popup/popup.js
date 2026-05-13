@@ -7,8 +7,9 @@
 
 document.addEventListener("DOMContentLoaded", init);
 
+let _glitchTimeouts = [];
+
 async function init() {
-  // Wire up settings button
   const btnOptions = document.getElementById("btn-options");
   btnOptions.addEventListener("click", () => {
     chrome.runtime.openOptionsPage();
@@ -16,35 +17,40 @@ async function init() {
 
   const bridgeEl = document.getElementById("title-bridge");
   if (bridgeEl) {
-    initRandomGlitch(bridgeEl, "BRIDGE");
+    _glitchTimeouts.push(...initRandomGlitch(bridgeEl, "BRIDGE"));
   }
 
-  // Get current tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab) return;
+  if (!tab || !tab.url || !tab.url.startsWith('http')) {
+    const pageUrlEl = document.getElementById("page-url");
+    pageUrlEl.textContent = "—";
+    pageUrlEl.title = "No valid page";
+    return;
+  }
 
-  // Show current page URL
   const pageUrlEl = document.getElementById("page-url");
   const displayUrl = truncateUrl(tab.url, 48);
   pageUrlEl.textContent = displayUrl;
   pageUrlEl.title = tab.url;
   applyScrambleCopy(pageUrlEl, tab.url);
 
-  // "Send Page" button
   const btnSendPage = document.getElementById("btn-send-page");
   btnSendPage.addEventListener("click", () => {
     sendUrl(tab.url, btnSendPage);
   });
 
-  // Query tab state from SW
   chrome.runtime.sendMessage(
     { action: "getTabState", tabId: tab.id },
     (state) => {
+      if (chrome.runtime.lastError) {
+        console.error("[MV3 Bridge] Failed to get tab state:", chrome.runtime.lastError);
+        renderStreams({ urls: [], hasMaster: false });
+        return;
+      }
       renderStreams(state || { urls: [], hasMaster: false });
     }
   );
 
-  // Check config to hide stream panel if sniffer is disabled
   chrome.storage.sync.get({ snifferEnabled: true }, (config) => {
     if (!config.snifferEnabled) {
       const streamPanel = document.querySelector(".stream-panel");
@@ -58,6 +64,10 @@ async function init() {
 /* ── Render stream list ── */
 
 function renderStreams(state) {
+  if (!state || !Array.isArray(state.urls)) {
+    state = { urls: [], hasMaster: false };
+  }
+
   const listEl = document.getElementById("stream-list");
   const emptyEl = document.getElementById("empty-state");
   const countEl = document.getElementById("stream-count");
@@ -138,7 +148,7 @@ function renderStreams(state) {
 /* ── Send to MPV via SW ── */
 
 function sendUrl(url, btnEl) {
-  if (btnEl.classList.contains("sending")) return;
+  if (!url || btnEl.classList.contains("sending")) return;
 
   btnEl.classList.add("sending");
   const originalHtml = btnEl.innerHTML;
@@ -155,11 +165,16 @@ function sendUrl(url, btnEl) {
       btnEl.classList.remove("sending");
       btnEl.innerHTML = originalHtml;
 
+      if (chrome.runtime.lastError) {
+        showToast(`ERR: ${chrome.runtime.lastError.message?.toUpperCase() || 'TX_FAILURE'}`, "error");
+        return;
+      }
+
       if (result && result.success) {
         showToast("INJECTION_SUCCESS", "success");
       } else {
         const errMsg = (result && result.error) || "TX_FAILURE";
-        showToast(`ERR: ${errMsg.toUpperCase()}`, "error");
+        showToast(`ERR: ${String(errMsg).toUpperCase()}`, "error");
       }
     }
   );
@@ -169,6 +184,8 @@ function sendUrl(url, btnEl) {
 
 function showToast(message, type) {
   const container = document.getElementById("toast-container");
+  if (!container) return;
+
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
@@ -196,18 +213,10 @@ function truncateUrl(url, maxLen) {
   }
 }
 
-/* ── DOM Helpers ── */
-
-function _bracketSpan(char) {
-  const span = document.createElement("span");
-  span.className = "btn-bracket";
-  span.textContent = char;
-  return span;
-}
-
 /* ── UI Helpers ── */
 
 function applyScrambleCopy(element, textToCopy) {
+  if (!textToCopy) return;
   element.style.cursor = "pointer";
   element.addEventListener("click", () => {
     if (element.classList.contains("url-glitch")) return;
@@ -232,7 +241,6 @@ function applyScrambleCopy(element, textToCopy) {
           clearInterval(intervalIn);
           element.textContent = finalString;
 
-          // Pause to let user read, then scramble back to original
           setTimeout(() => {
             let iterationsOut = 0;
             const intervalOut = setInterval(() => {
@@ -241,7 +249,7 @@ function applyScrambleCopy(element, textToCopy) {
                 return chars[Math.floor(Math.random() * chars.length)];
               }).join("");
 
-              iterationsOut += 1; // Resolve original URL slightly slower
+              iterationsOut += 1;
               if (iterationsOut > original.length + 1) {
                 clearInterval(intervalOut);
                 element.textContent = original;
@@ -251,13 +259,16 @@ function applyScrambleCopy(element, textToCopy) {
           }, 1000);
         }
       }, 45);
+    }).catch(() => {
+      showToast("ERR: CLIPBOARD_FAIL", "error");
     });
   });
 }
 
 function initRandomGlitch(element, finalString) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-  
+  const timeouts = [];
+
   function triggerGlitch() {
     element.classList.add("is-glitching");
     let iterations = 0;
@@ -267,16 +278,17 @@ function initRandomGlitch(element, finalString) {
         return chars[Math.floor(Math.random() * chars.length)];
       }).join("");
       iterations++;
-      
+
       if (iterations > 6) {
         clearInterval(interval);
         element.textContent = finalString;
         element.classList.remove("is-glitching");
-        
-        setTimeout(triggerGlitch, 3000 + Math.random() * 7000);
+
+        timeouts.push(setTimeout(triggerGlitch, 3000 + Math.random() * 7000));
       }
     }, 30);
   }
-  
-  setTimeout(triggerGlitch, 2000 + Math.random() * 3000);
+
+  timeouts.push(setTimeout(triggerGlitch, 2000 + Math.random() * 3000));
+  return timeouts;
 }

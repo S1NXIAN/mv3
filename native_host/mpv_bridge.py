@@ -18,15 +18,28 @@ import os
 import glob
 import time
 import tempfile
+import shutil
+import atexit
 from urllib.parse import urlparse
 
 
-# ── Stale Cookie Cleanup ──────────────────────────────────────────────
-# Removes old Netscape cookie files from /tmp to prevent clutter.
-# Called on every "play" action. Only removes files older than 1 hour.
-
 COOKIE_PREFIX = 'mv3_cookies_'
-COOKIE_MAX_AGE_SECONDS = 3600  # 1 hour
+COOKIE_MAX_AGE_SECONDS = 3600
+
+_cookie_files = []
+
+
+def _cleanup_cookie_files():
+    """Remove temporary cookie files created during this session."""
+    for filepath in _cookie_files:
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        except OSError:
+            pass
+
+
+atexit.register(_cleanup_cookie_files)
 
 
 def _cleanup_stale_cookies():
@@ -44,28 +57,24 @@ def _cleanup_stale_cookies():
         pass
 
 
-def _extract_domain(url):
-    """Extract the domain from a URL for cookie jar formatting."""
-    try:
-        parsed = urlparse(url)
-        domain = parsed.hostname or ''
-        # Netscape cookie format expects leading dot for domain-wide cookies
-        if domain and not domain.startswith('.'):
-            domain = '.' + domain
-        return domain
-    except Exception:
-        return '.unknown.com'
+def _escape_cookie_value(value):
+    """Escape cookie value for Netscape format (handles special characters)."""
+    return value.replace('\t', '\u0009').replace('\n', '\u000A').replace('\r', '\u000D')
 
 
 def read_message():
-    raw_length = sys.stdin.buffer.read(4)
-    if len(raw_length) < 4:
-        sys.exit(0)
-    length = struct.unpack('<I', raw_length)[0]
-    if length > 1024 * 1024:
+    try:
+        raw_length = sys.stdin.buffer.read(4)
+        if len(raw_length) < 4:
+            sys.exit(0)
+        length = struct.unpack('<I', raw_length)[0]
+        if length > 1024 * 1024:
+            sys.exit(1)
+        raw_message = sys.stdin.buffer.read(length)
+        return json.loads(raw_message.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        send_message({'status': 'error', 'message': f'Invalid message format: {e}'})
         sys.exit(1)
-    raw_message = sys.stdin.buffer.read(length)
-    return json.loads(raw_message.decode('utf-8'))
 
 
 def send_message(obj):
@@ -79,18 +88,17 @@ def handle_play(message):
     url = message.get('url', '')
     flags = message.get('flags', [])
     mpv_path = message.get('mpvPath', '/usr/bin/mpv')
-    cookies = message.get('cookies', [])  # Now expected as a list of dicts
+    cookies = message.get('cookies', [])
     user_agent = message.get('userAgent', '')
 
     if not url:
         send_message({'status': 'error', 'message': 'No URL provided'})
         return
 
-    if not os.path.isfile(mpv_path):
-        send_message({'status': 'error', 'message': f'MPV not found: {mpv_path}'})
+    if not os.path.isfile(mpv_path) or not os.access(mpv_path, os.X_OK):
+        send_message({'status': 'error', 'message': f'MPV not found or not executable: {mpv_path}'})
         return
 
-    # Clean up stale cookie files from previous sessions
     _cleanup_stale_cookies()
 
     safe_flags = [f for f in flags if isinstance(f, str) and f.startswith('-')]
@@ -103,38 +111,42 @@ def handle_play(message):
     if referer:
         cmd.append(f"--referrer={referer}")
 
-    # ── yt-dlp Hardening ──────────────────────────────────────────────
     ytdl_opts = ['socket-timeout=30']
 
-    # ── Cookie Jar (Netscape format) ──────────────────────────────────
+    cookie_file = None
     if cookies and isinstance(cookies, list):
         try:
-            cookie_file = tempfile.NamedTemporaryFile(
-                mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
-            )
-            cookie_file.write("# Netscape HTTP Cookie File\n")
-            
-            for c in cookies:
-                # chrome.cookies fields: domain, path, secure, expirationDate, name, value, hostOnly
-                domain = c.get('domain', '')
-                path = c.get('path', '/')
-                secure = "TRUE" if c.get('secure') else "FALSE"
-                expires = int(c.get('expirationDate', 0))
-                name = c.get('name', '')
-                value = c.get('value', '')
-                
-                # In Netscape format, the second field is 'include subdomains'
-                # For host-only cookies (no leading dot), it's FALSE.
-                subdomains = "TRUE" if domain.startswith('.') else "FALSE"
-                
-                cookie_file.write(f"{domain}\t{subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
-            
-            cookie_file.close()
-            ytdl_opts.append(f'cookies={cookie_file.name}')
-        except Exception:
-            pass
+            current_time = int(time.time())
+            valid_cookies = [c for c in cookies if c.get('expirationDate', 0) >= current_time]
 
-    # Combine all ytdl options into a single flag
+            if valid_cookies:
+                cookie_file = tempfile.NamedTemporaryFile(
+                    mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
+                )
+                cookie_file.write("# Netscape HTTP Cookie File\n")
+
+                for c in valid_cookies:
+                    domain = c.get('domain', '')
+                    path = c.get('path', '/')
+                    secure = "TRUE" if c.get('secure') else "FALSE"
+                    expires = int(c.get('expirationDate', 0))
+                    name = _escape_cookie_value(c.get('name', ''))
+                    value = _escape_cookie_value(c.get('value', ''))
+
+                    subdomains = "TRUE" if domain.startswith('.') else "FALSE"
+
+                    cookie_file.write(f"{domain}\t{subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
+
+                cookie_file.close()
+                _cookie_files.append(cookie_file.name)
+                ytdl_opts.append(f'cookies={cookie_file.name}')
+        except Exception as e:
+            if cookie_file and os.path.exists(cookie_file.name):
+                try:
+                    os.remove(cookie_file.name)
+                except OSError:
+                    pass
+
     if ytdl_opts:
         cmd.append(f"--ytdl-raw-options={','.join(ytdl_opts)}")
 
@@ -156,7 +168,6 @@ def handle_play(message):
 
 
 def handle_ping():
-    import shutil
     mpv_found = shutil.which('mpv')
     send_message({
         'status': 'success',
@@ -167,15 +178,18 @@ def handle_ping():
 
 
 def main():
-    message = read_message()
-    action = message.get('action', '')
+    try:
+        message = read_message()
+        action = message.get('action', '')
 
-    if action == 'play':
-        handle_play(message)
-    elif action == 'ping':
-        handle_ping()
-    else:
-        send_message({'status': 'error', 'message': f'Unknown action: {action}'})
+        if action == 'play':
+            handle_play(message)
+        elif action == 'ping':
+            handle_ping()
+        else:
+            send_message({'status': 'error', 'message': f'Unknown action: {action}'})
+    except Exception as e:
+        send_message({'status': 'error', 'message': f'Internal error: {e}'})
 
 
 if __name__ == '__main__':

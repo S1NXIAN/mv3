@@ -1,29 +1,45 @@
 /**
  * MV3 — H264ify Codec Shield
- * 
+ *
  * "Gold Standard" implementation that monkey-patches browser media APIs
  * to block VP8, VP9, and AV1, forcing the browser to fall back to H.264 (AVC).
  */
 
 (function() {
-  const BLOCKED_CODECS = ["vp8", "vp9", "av01", "av1"];
+  const BLOCKED_CODECS = [
+    "vp8", "vp9", "vp09",
+    "av01", "av1", "av1c",
+    "vp8l"
+  ];
+  const BLOCKED_PROFILES = [
+    "av01.0.05M",
+    "av01.0.08M",
+    "av01.0.12M",
+    "av01.0.13M",
+    "av01.0.17M",
+    "av01.0.20M",
+    "av01.0.32M",
+    "av01.0.41M"
+  ];
   const BLOCKED_CONTAINERS = ["video/webm"];
 
   const isBlocked = (type) => {
     if (!type || typeof type !== 'string') return false;
     const lowerType = type.toLowerCase();
-    return BLOCKED_CODECS.some(c => lowerType.includes(c)) || 
-           BLOCKED_CONTAINERS.some(c => lowerType.includes(c));
+    if (BLOCKED_CONTAINERS.some(c => lowerType.includes(c))) return true;
+    if (BLOCKED_PROFILES.some(p => lowerType.includes(p))) return true;
+    return BLOCKED_CODECS.some(c => {
+      const regex = new RegExp(`(^|[,\\s])${c}([,\\s]|$)`, 'i');
+      return regex.test(lowerType);
+    });
   };
 
-  // 1. Monkey-patch HTMLVideoElement.canPlayType
   const originalCanPlayType = HTMLVideoElement.prototype.canPlayType;
   HTMLVideoElement.prototype.canPlayType = function(type) {
     if (isBlocked(type)) return "";
     return originalCanPlayType.apply(this, arguments);
   };
 
-  // 2. Monkey-patch MediaSource.isTypeSupported
   if (window.MediaSource && typeof window.MediaSource.isTypeSupported === 'function') {
     const originalIsTypeSupported = window.MediaSource.isTypeSupported;
     window.MediaSource.isTypeSupported = function(type) {
@@ -32,7 +48,6 @@
     };
   }
 
-  // 3. Monkey-patch MediaCapabilities.decodingInfo (The Modern Standard)
   if (navigator.mediaCapabilities && navigator.mediaCapabilities.decodingInfo) {
     const originalDecodingInfo = navigator.mediaCapabilities.decodingInfo;
     navigator.mediaCapabilities.decodingInfo = function(config) {

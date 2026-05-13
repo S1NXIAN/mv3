@@ -5,12 +5,17 @@
   *Cyberpunk-themed browser extension to route network streams directly to MPV*
 
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-3c873a?style=flat-square)](#)
-  [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Edge%20|%20Brave-478ce1?style=flat-square)](#)
+  [![Platform](https://img.shields.io/badge/Platform-Linux-cc3333?style=flat-square)](#)
+  [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Chromium%20|%20Brave%20|%20Edge-478ce1?style=flat-square)](#)
   [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
   ⭐ If you like this project, star it on GitHub!
 
   [Features](#features) • [Installation](#installation) • [Configuration](#configuration)
+
+</div>
+
+> **⚠️ Note:** This project is **Linux-only**. Windows and macOS are not supported.
 
 </div>
 
@@ -47,12 +52,18 @@ Because this extension interfaces directly with a desktop application (`mpv`), i
 ### 2. Install the Native Messaging Host
 To allow the extension to communicate with `mpv`, you must register the native host script. This project includes an interactive installer for Linux.
 
+**Supported Browsers (Linux):**
+- Google Chrome
+- Chromium
+- BraveOrigin
+- Microsoft Edge
+
 1. Open your terminal and navigate to the `native_host` directory.
 2. Run the installer script:
    ```bash
    ./install.sh
    ```
-3. The installer will automatically detect compatible browsers (Chrome, Chromium, Brave). Use the arrow keys and **Space** to select your browser(s), then press **Enter**.
+3. The installer will automatically detect compatible browsers. Use the arrow keys and **Space** to select your browser(s), then press **Enter**.
 4. When prompted, enter your **Extension ID**. You can find this in your browser's `chrome://extensions` page under the MV3 entry.
 
 The script will automatically set the necessary permissions and install the manifest JSON to the correct system location.

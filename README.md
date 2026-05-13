@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icons/active/icon128.png" width="96" alt="MV3 Bridge Logo">
+  <img src="icons/idle/icon128.png" width="96" alt="MV3 Bridge Logo">
 
   # MV3 // BRIDGE
   *Cyberpunk-themed browser extension to route network streams directly to MPV*

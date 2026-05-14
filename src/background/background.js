@@ -9,9 +9,10 @@
  *   5. Context menu
  *   6. Native messaging dispatcher
  *   7. Internal message router (popup ↔ SW)
+ *   8. Storage utilities
  */
 
-console.log("[MV3 Bridge] Service Worker BOOTING...");
+importScripts("../utils/storage-utils.js");
 
 /* ──────────────────────────────────────────────
  * 1. CONFIG (with expiration)
@@ -61,16 +62,14 @@ async function syncH264ify() {
           matches: ["<all_urls>"],
           runAt: "document_start",
           world: "MAIN",
-          allFrames: true
-        }]);
-        console.log("[MV3 Bridge] H264ify registered.");
-      }
-    } else {
-      if (existing.length > 0) {
-        await chrome.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] });
-        console.log("[MV3 Bridge] H264ify unregistered.");
-      }
-    }
+           allFrames: true
+         }]);
+       }
+     } else {
+       if (existing.length > 0) {
+         await chrome.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] });
+       }
+     }
   } catch (err) {
     console.error("[MV3 Bridge] Failed to sync H264ify:", err);
   }
@@ -100,18 +99,12 @@ let cacheHydrated = false;
 
 async function hydrateCache() {
   if (cacheHydrated) return;
-  try {
-    if (chrome.storage && chrome.storage.session) {
-      const data = await chrome.storage.session.get(null);
-      for (const [key, value] of Object.entries(data)) {
-        if (key.startsWith("tab_")) {
-          const tabId = parseInt(key.split("_")[1], 10);
-          stateCache.set(tabId, { ...value, pending: new Set() });
-        }
-      }
+  const data = await MV3_Storage.getSession();
+  for (const [key, value] of Object.entries(data)) {
+    if (key.startsWith("tab_")) {
+      const tabId = parseInt(key.split("_")[1], 10);
+      stateCache.set(tabId, { ...value, pending: new Set() });
     }
-  } catch (err) {
-    console.warn("[MV3 Bridge] Session storage unavailable, falling back to memory:", err);
   }
   cacheHydrated = true;
 }
@@ -132,11 +125,7 @@ async function saveTabState(tabId) {
   if (!state) return;
   // Exclude 'pending' Set because Sets cannot be serialized to JSON
   const toSave = { urls: state.urls, hasMaster: state.hasMaster };
-  try {
-    if (chrome.storage && chrome.storage.session) {
-      await chrome.storage.session.set({ [`tab_${tabId}`]: toSave });
-    }
-  } catch (_) {}
+  await MV3_Storage.setSession({ [`tab_${tabId}`]: toSave });
 }
 
 async function clearTabState(tabId) {
@@ -145,11 +134,7 @@ async function clearTabState(tabId) {
     badgeUpdateTimeouts.delete(tabId);
   }
   stateCache.delete(tabId);
-  try {
-    if (chrome.storage && chrome.storage.session) {
-      await chrome.storage.session.remove(`tab_${tabId}`);
-    }
-  } catch (_) {}
+  await MV3_Storage.removeSession(`tab_${tabId}`);
   updateBadge(tabId, { urls: [], hasMaster: false });
 }
 
@@ -207,6 +192,18 @@ async function handleMimeBasedDetection(details) {
   await classifyAndStore(tabId, url);
 }
 
+async function detectPlaylistType(url) {
+  try {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) return "unknown";
+    
+    const text = await response.text();
+    if (MASTER_PLAYLIST_REGEX.test(text)) return "master";
+    if (MEDIA_PLAYLIST_REGEX.test(text)) return "media";
+  } catch (_) {}
+  return "unknown";
+}
+
 async function classifyAndStore(tabId, url) {
   const state = await getTabState(tabId);
 
@@ -214,28 +211,13 @@ async function classifyAndStore(tabId, url) {
     state._urlIndex = new Set(state.urls.map((e) => e.url));
   }
   if (state._urlIndex.has(url) || state.pending.has(url)) return;
-  state.pending.add(url);
 
-  let type = "unknown";
-  try {
-    const response = await fetch(url, { credentials: "include" });
-    if (response.ok) {
-      const text = await response.text();
-      if (MASTER_PLAYLIST_REGEX.test(text)) {
-        type = "master";
-      } else if (MEDIA_PLAYLIST_REGEX.test(text)) {
-        type = "media";
-      }
-    }
-  } catch (_) {
-  } finally {
-    state.pending.delete(url);
-  }
+  state.pending.add(url);
+  const type = await detectPlaylistType(url);
+  state.pending.delete(url);
 
   const currentState = stateCache.get(tabId);
-  if (currentState !== state) return;
-
-  if (state._urlIndex.has(url)) return;
+  if (currentState !== state || state._urlIndex.has(url)) return;
 
   state.urls.push({ url, type, timestamp: Date.now() });
   state._urlIndex.add(url);

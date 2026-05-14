@@ -34,7 +34,7 @@ async function loadSettings() {
     }
     const versionStr = `v${manifest.version}`;
     versionEl.textContent = versionStr;
-    _glitchTimeouts.push(...initVersionGlitch(versionEl, versionStr));
+    _glitchTimeouts.push(...MV3_UI.initRandomGlitch(versionEl, versionStr));
 
     const mpvPathEl = document.getElementById("input-mpv-path");
     const hostNameEl = document.getElementById("input-host-name");
@@ -94,7 +94,7 @@ async function loadSettings() {
     const btnSave = document.getElementById("btn-save");
     const btnReset = document.getElementById("btn-reset");
     const btnTest = document.getElementById("btn-test-host");
-    if (btnSave) btnSave.addEventListener("click", saveSettings);
+    if (btnSave) btnSave.addEventListener("click", () => saveSettings(btnSave));
     if (btnReset) btnReset.addEventListener("click", resetSettings);
     if (btnTest) btnTest.addEventListener("click", testConnection);
   } catch (err) {
@@ -104,11 +104,10 @@ async function loadSettings() {
 }
 
 /* ── Save ── */
-async function saveSettings() {
+async function saveSettings(btnSave) {
   if (_isSaving) return;
   _isSaving = true;
 
-  const btnSave = document.getElementById("btn-save");
   if (btnSave) {
     btnSave.textContent = "[ SAVING... ]";
     btnSave.disabled = true;
@@ -134,21 +133,11 @@ async function saveSettings() {
 
     if (!mpvPath.startsWith("/")) {
       flashToast("ERR: Absolute path required.");
-      _isSaving = false;
-      if (btnSave) {
-        btnSave.innerHTML = '<div class="btn-scan"></div>[ COMMIT CHANGES ]';
-        btnSave.disabled = false;
-      }
       return;
     }
 
     if (!/^[a-zA-Z0-9._-]+$/.test(hostName)) {
       flashToast("ERR: Invalid host name format.");
-      _isSaving = false;
-      if (btnSave) {
-        btnSave.innerHTML = '<div class="btn-scan"></div>[ COMMIT CHANGES ]';
-        btnSave.disabled = false;
-      }
       return;
     }
 
@@ -243,30 +232,4 @@ function flashToast(message) {
 
 /* ── UI Helpers ── */
 
-function initVersionGlitch(element, finalString) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-  const timeouts = [];
-
-  function triggerGlitch() {
-    element.classList.add("is-glitching");
-    let iterations = 0;
-    const interval = setInterval(() => {
-      element.textContent = finalString.split("").map((letter, index) => {
-        if (Math.random() > 0.5) return finalString[index];
-        return chars[Math.floor(Math.random() * chars.length)];
-      }).join("");
-      iterations++;
-
-      if (iterations > 6) {
-        clearInterval(interval);
-        element.textContent = finalString;
-        element.classList.remove("is-glitching");
-
-        timeouts.push(setTimeout(triggerGlitch, 3000 + Math.random() * 7000));
-      }
-    }, 30);
-  }
-
-  timeouts.push(setTimeout(triggerGlitch, 2000 + Math.random() * 3000));
-  return timeouts;
-}
+// Local helpers moved to ui-utils.js

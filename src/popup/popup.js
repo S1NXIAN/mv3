@@ -17,22 +17,25 @@ async function init() {
 
   const bridgeEl = document.getElementById("title-bridge");
   if (bridgeEl) {
-    _glitchTimeouts.push(...initRandomGlitch(bridgeEl, "BRIDGE"));
+    _glitchTimeouts.push(...MV3_UI.initRandomGlitch(bridgeEl, "BRIDGE"));
   }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const pageUrlEl = document.getElementById("page-url");
   if (!tab || !tab.url || !tab.url.startsWith('http')) {
-    const pageUrlEl = document.getElementById("page-url");
-    pageUrlEl.textContent = "—";
-    pageUrlEl.title = "No valid page";
+    if (pageUrlEl) {
+      pageUrlEl.textContent = "—";
+      pageUrlEl.title = "No valid page";
+    }
     return;
   }
 
-  const pageUrlEl = document.getElementById("page-url");
   const displayUrl = truncateUrl(tab.url, 48);
-  pageUrlEl.textContent = displayUrl;
-  pageUrlEl.title = tab.url;
-  applyScrambleCopy(pageUrlEl, tab.url);
+  if (pageUrlEl) {
+    pageUrlEl.textContent = displayUrl;
+    pageUrlEl.title = tab.url;
+    MV3_UI.applyScrambleCopy(pageUrlEl, tab.url, (msg) => showToast(msg, "error"));
+  }
 
   const btnSendPage = document.getElementById("btn-send-page");
   btnSendPage.addEventListener("click", () => {
@@ -121,7 +124,7 @@ function renderStreams(state) {
     urlSpan.textContent = truncateUrl(entry.url, 40);
     urlSpan.title = "Click to copy URL";
 
-    applyScrambleCopy(urlSpan, entry.url);
+    MV3_UI.applyScrambleCopy(urlSpan, entry.url, (msg) => showToast(msg, "error"));
 
     const strip = document.createElement("div");
     strip.className = "inject-strip";
@@ -215,80 +218,4 @@ function truncateUrl(url, maxLen) {
 
 /* ── UI Helpers ── */
 
-function applyScrambleCopy(element, textToCopy) {
-  if (!textToCopy) return;
-  element.style.cursor = "pointer";
-  element.addEventListener("click", () => {
-    if (element.classList.contains("url-glitch")) return;
-
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      const original = element.dataset.original || element.textContent;
-      element.dataset.original = original;
-      element.classList.add("url-glitch");
-
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-      const finalString = "COPIED_TO_CLIPBOARD";
-      let iterationsIn = 0;
-
-      const intervalIn = setInterval(() => {
-        element.textContent = finalString.split("").map((letter, index) => {
-          if (index < iterationsIn) return finalString[index];
-          return chars[Math.floor(Math.random() * chars.length)];
-        }).join("");
-
-        iterationsIn += 1;
-        if (iterationsIn > finalString.length) {
-          clearInterval(intervalIn);
-          element.textContent = finalString;
-
-          setTimeout(() => {
-            let iterationsOut = 0;
-            const intervalOut = setInterval(() => {
-              element.textContent = original.split("").map((letter, index) => {
-                if (index < iterationsOut) return original[index];
-                return chars[Math.floor(Math.random() * chars.length)];
-              }).join("");
-
-              iterationsOut += 1;
-              if (iterationsOut > original.length + 1) {
-                clearInterval(intervalOut);
-                element.textContent = original;
-                element.classList.remove("url-glitch");
-              }
-            }, 25);
-          }, 1000);
-        }
-      }, 45);
-    }).catch(() => {
-      showToast("ERR: CLIPBOARD_FAIL", "error");
-    });
-  });
-}
-
-function initRandomGlitch(element, finalString) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-  const timeouts = [];
-
-  function triggerGlitch() {
-    element.classList.add("is-glitching");
-    let iterations = 0;
-    const interval = setInterval(() => {
-      element.textContent = finalString.split("").map((letter, index) => {
-        if (Math.random() > 0.5) return finalString[index];
-        return chars[Math.floor(Math.random() * chars.length)];
-      }).join("");
-      iterations++;
-
-      if (iterations > 6) {
-        clearInterval(interval);
-        element.textContent = finalString;
-        element.classList.remove("is-glitching");
-
-        timeouts.push(setTimeout(triggerGlitch, 3000 + Math.random() * 7000));
-      }
-    }, 30);
-  }
-
-  timeouts.push(setTimeout(triggerGlitch, 2000 + Math.random() * 3000));
-  return timeouts;
-}
+// Local helpers moved to ui-utils.js

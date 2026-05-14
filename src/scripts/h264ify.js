@@ -61,6 +61,4 @@
       return originalDecodingInfo.apply(navigator.mediaCapabilities, arguments);
     };
   }
-
-  console.log("[MV3 Bridge] H264ify Shield ACTIVE — VP8/VP9/AV1 Blocked.");
 })();

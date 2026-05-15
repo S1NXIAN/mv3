@@ -16,5 +16,6 @@ self.MV3_CONFIG_DEFAULTS = Object.freeze({
   vo: "",
   alwaysOnTop: false,
   ytdlFormat: "",
+  socketTimeout: 30,
   advancedMode: false,
 });

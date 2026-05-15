@@ -64,6 +64,7 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
     referer: referer || url,
     flags: buildMpvFlags(config, extraFlags),
     mpvPath: config.mpvPath,
+    socketTimeout: config.socketTimeout || 30,
   };
 
   if (config.passIdentity) {

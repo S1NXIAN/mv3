@@ -177,10 +177,22 @@
       <!-- Advanced Flags -->
       <section class="hud-panel grid-span-full advanced-panel">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label">
-          <span class="glitch-txt" data-text="SYS.FLAGS">SYS.FLAGS</span> // RAW PARAMS
+        <div class="hud-label" style="display: flex; justify-content: space-between; align-items: flex-end; border-left: none; padding-left: 0; margin-bottom: 24px;">
+          <div style="border-left: 2px solid var(--crimson); padding-left: 8px;">
+            <span class="glitch-txt" data-text="SYS.FLAGS">SYS.FLAGS</span> // RAW PARAMS
+          </div>
+          <a href="../docs/docs.html" target="_blank" class="hud-action-btn primary" style="padding: 6px 12px; font-size: 10px; text-decoration: none; border-radius: 2px; line-height: 1;">
+            <div class="btn-scan"></div>
+            [ VIEW DOCS ]
+          </a>
         </div>
         <div class="panel-content">
+          <div class="field">
+            <label for="input-socket-timeout">SOCKET_TIMEOUT <span class="slider-value" id="socket-timeout-display">30s</span></label>
+            <input type="range" id="input-socket-timeout" class="hud-slider" min="5" max="120" step="5" value="30">
+            <p class="field-hint">yt-dlp connection timeout. Increase for slow networks.</p>
+          </div>
+
           <div class="field">
             <label for="input-ytdl-format">YTDL_FORMAT [--ytdl-format]</label>
             <input type="text" id="input-ytdl-format" class="hud-input" spellcheck="false" placeholder="Leave blank for defaults">

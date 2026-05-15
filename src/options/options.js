@@ -54,6 +54,17 @@ async function loadSettings() {
       if (el) el.value = config[configKey] || "";
     }
 
+    // Socket timeout slider
+    const sliderEl = document.getElementById("input-socket-timeout");
+    const sliderDisplay = document.getElementById("socket-timeout-display");
+    if (sliderEl) {
+      sliderEl.value = config.socketTimeout || 30;
+      if (sliderDisplay) sliderDisplay.textContent = `${sliderEl.value}s`;
+      sliderEl.addEventListener("input", () => {
+        if (sliderDisplay) sliderDisplay.textContent = `${sliderEl.value}s`;
+      });
+    }
+
     const advToggle = document.getElementById("toggle-advanced");
     const advPanels = document.querySelectorAll(".advanced-panel");
 
@@ -118,6 +129,7 @@ async function saveSettings(btnSave) {
     const vo = document.getElementById("input-vo")?.value ?? "";
     const alwaysOnTop = document.getElementById("toggle-ontop")?.checked ?? false;
     const ytdlFormat = document.getElementById("input-ytdl-format").value.trim();
+    const socketTimeout = parseInt(document.getElementById("input-socket-timeout")?.value, 10) || 30;
     const advancedMode = document.getElementById("toggle-advanced")?.checked ?? false;
 
     const flagsRaw = document.getElementById("input-default-flags").value;
@@ -146,6 +158,7 @@ async function saveSettings(btnSave) {
       vo,
       alwaysOnTop,
       ytdlFormat,
+      socketTimeout,
       defaultFlags,
       advancedMode,
     });

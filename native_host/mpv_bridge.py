@@ -111,7 +111,8 @@ def handle_play(message):
     if referer:
         cmd.append(f"--referrer={referer}")
 
-    ytdl_opts = ['socket-timeout=30']
+    socket_timeout = message.get('socketTimeout', 30)
+    ytdl_opts = [f'socket-timeout={int(socket_timeout)}']
 
     cookie_file = None
     if cookies and isinstance(cookies, list):

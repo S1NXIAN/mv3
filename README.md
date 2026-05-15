@@ -6,7 +6,7 @@
 
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-3c873a?style=flat-square)](#)
   [![Platform](https://img.shields.io/badge/Platform-Linux-cc3333?style=flat-square)](#)
-  [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Chromium%20|%20Brave%20|%20Edge-478ce1?style=flat-square)](#)
+  [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Chromium%20|%20Brave%20|%20Edge-478ce1?style=flat-square)](#)i 
   [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
   ⭐ If you like this project, star it on GitHub!

@@ -41,11 +41,17 @@ async function loadSettings() {
     if (mpvPathEl) mpvPathEl.value = config.mpvPath;
     if (hostNameEl) hostNameEl.value = config.hostName;
 
-    const toggleIds = ["toggle-sniffer", "toggle-pass-identity", "toggle-force-h264", "toggle-ontop", "toggle-advanced"];
-    toggleIds.forEach(id => {
+    const toggleMap = {
+      "toggle-sniffer": "snifferEnabled",
+      "toggle-pass-identity": "passIdentity",
+      "toggle-force-h264": "forceH264",
+      "toggle-ontop": "alwaysOnTop",
+      "toggle-advanced": "advancedMode"
+    };
+    for (const [id, configKey] of Object.entries(toggleMap)) {
       const el = document.getElementById(id);
-      if (el) el.checked = config[id.replace("toggle-", "")] ?? config[id];
-    });
+      if (el) el.checked = config[configKey];
+    }
 
     const selectIds = { "input-hwdec": "hwDec", "input-vo": "vo" };
     for (const [elId, configKey] of Object.entries(selectIds)) {

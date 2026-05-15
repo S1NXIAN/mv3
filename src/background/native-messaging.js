@@ -62,12 +62,12 @@ async function sendToMpv(url, extraFlags = [], referer = null) {
     action: "play",
     url: url,
     referer: referer || url,
-    userAgent: navigator.userAgent,
     flags: buildMpvFlags(config, extraFlags),
     mpvPath: config.mpvPath,
   };
 
   if (config.passIdentity) {
+    payload.userAgent = navigator.userAgent;
     payload.cookies = await mergeCookies(url, referer);
   }
 

@@ -156,5 +156,5 @@ mv3/
 ## Limitations
 
 - **Browser Support**: Tested on Brave Origin Nightly and Chromium only
-- **Age-Restricted Content**: Cookie forwarding is experimental—age-restricted YouTube videos may require additional yt-dlp setup (PO token support)
+- **Cookie Passing**: Highly experimental. Does not work reliably with Chromium-based browsers due to app-bound encryption and YouTube PO token requirements. Expect failures for authenticated content.
 - **Platform**: Linux-only. macOS/Windows would require installer modifications

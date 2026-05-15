@@ -35,34 +35,15 @@ HOST_NAME = "com.mpvbridge.native"
 
 # ── Browser Definitions ────────────────────────────────────────────────
 
+# Supported browsers - extend this list to add more browser support
 # engine: 'chromium' uses allowed_origins + NativeMessagingHosts/
 # engine: 'firefox'  uses allowed_extensions + native-messaging-hosts/
-
-BROWSER_REGISTRY = [
-    # Chromium-based
-    {"name": "Google Chrome",       "engine": "chromium", "path": "~/.config/google-chrome"},
-    {"name": "Google Chrome Beta",  "engine": "chromium", "path": "~/.config/google-chrome-beta"},
-    {"name": "Google Chrome Dev",   "engine": "chromium", "path": "~/.config/google-chrome-unstable"},
-    {"name": "Chromium",            "engine": "chromium", "path": "~/.config/chromium"},
-    {"name": "Ungoogled Chromium",  "engine": "chromium", "path": "~/.config/chromium"},
-    {"name": "Brave",               "engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Browser"},
-    {"name": "Brave Beta",          "engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Browser-Beta"},
-    {"name": "Brave Nightly",       "engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Browser-Nightly"},
-    {"name": "Brave Origin Nightly","engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Origin-Nightly"},
-    {"name": "Microsoft Edge",      "engine": "chromium", "path": "~/.config/microsoft-edge"},
-    {"name": "Microsoft Edge Beta", "engine": "chromium", "path": "~/.config/microsoft-edge-beta"},
-    {"name": "Microsoft Edge Dev",  "engine": "chromium", "path": "~/.config/microsoft-edge-dev"},
-    {"name": "Vivaldi",             "engine": "chromium", "path": "~/.config/vivaldi"},
-    {"name": "Vivaldi Snapshot",    "engine": "chromium", "path": "~/.config/vivaldi-snapshot"},
-    {"name": "Opera",               "engine": "chromium", "path": "~/.config/opera"},
-    {"name": "Opera Beta",          "engine": "chromium", "path": "~/.config/opera-beta"},
-    {"name": "Opera Developer",     "engine": "chromium", "path": "~/.config/opera-developer"},
-    {"name": "Thorium",             "engine": "chromium", "path": "~/.config/thorium"},
-    # Firefox-based
-    {"name": "Firefox",             "engine": "firefox",  "path": "~/.mozilla/native-messaging-hosts"},
-    {"name": "Zen Browser",         "engine": "firefox",  "path": "~/.zen/native-messaging-hosts"},
-    {"name": "Floorp",              "engine": "firefox",  "path": "~/.floorp/native-messaging-hosts"},
-    {"name": "Waterfox",            "engine": "firefox",  "path": "~/.waterfox/native-messaging-hosts"},
+SUPPORTED_BROWSERS = [
+    {"name": "Brave Origin Nightly", "id": "brave-origin-nightly", "engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Origin-Nightly"},
+    {"name": "Chromium",             "id": "chromium",            "engine": "chromium", "path": "~/.config/chromium"},
+    # Future additions:
+    # {"name": "Brave Beta",          "id": "brave-beta",          "engine": "chromium", "path": "~/.config/BraveSoftware/Brave-Browser-Beta"},
+    # {"name": "Firefox",             "id": "firefox",             "engine": "firefox",  "path": "~/.mozilla/native-messaging-hosts"},
 ]
 
 
@@ -70,7 +51,7 @@ def get_detected_browsers():
     """Scan the filesystem for installed browsers and return detected entries."""
     detected = []
     seen_paths = set()
-    for entry in BROWSER_REGISTRY:
+    for entry in SUPPORTED_BROWSERS:
         resolved = os.path.expanduser(entry["path"])
         # For Chromium-based: check if the config dir exists
         # For Firefox-based: the native-messaging-hosts dir may not exist yet,
@@ -82,7 +63,6 @@ def get_detected_browsers():
 
         if os.path.isdir(check_path):
             # Deduplicate entries that share the same resolved path
-            # (e.g. Ungoogled Chromium and Chromium both use ~/.config/chromium)
             key = (resolved, entry["engine"])
             if key in seen_paths:
                 continue

@@ -10,7 +10,7 @@ self.MV3_CONFIG_DEFAULTS = Object.freeze({
   hostName: "com.mpvbridge.native",
   defaultFlags: [],
   snifferEnabled: true,
-  passIdentity: true,
+  passIdentity: false,
   forceH264: false,
   hwDec: "",
   vo: "",

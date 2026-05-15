@@ -8,7 +8,7 @@
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-3c873a?style=flat-square)](#)
   [![Platform](https://img.shields.io/badge/Platform-Linux-cc3333?style=flat-square)](#)
   [![Version](https://img.shields.io/badge/Version-2.3.8-00e5ff?style=flat-square)](#)
-  [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Brave%20|%20Edge%20|%20Vivaldi%20|%20Opera%20|%20Firefox-478ce1?style=flat-square)](#)
+  [![Browser](https://img.shields.io/badge/Browser-Brave%20Origin%20Nightly%20|%20Chromium-478ce1?style=flat-square)](#)
 
   [Features](#features) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture)
 </div>
@@ -32,8 +32,8 @@ By passing browser identity and cookies down to `yt-dlp` and `mpv`, this extensi
 - **Real-Time HLS Interception**  
   Sniffs `.m3u8` manifests directly from the network using the `webRequest` API. Automatically classifies streams as master or media playlists and presents them in the popup HUD.
   
-- **Identity Forwarding (Cookie Sync)**  
-  Seamlessly passes your active browser session (cookies and User-Agent) to the native `mpv` process. This enables playback of authenticated or age-restricted streams from premium services without requiring manual token extraction.
+- **Identity Forwarding (Cookie Sync)** [EXPERIMENTAL]
+  Seamlessly passes your active browser session (cookies and User-Agent) to the native `mpv` process. This enables playback of authenticated or age-restricted streams from premium services without requiring manual token extraction. Note: This feature is experimental and may not work for all age-restricted content.
 
 - **Codec Enforcement (h264ify)**  
   Injects isolated scripts to block `VP8`, `VP9`, and `AV1` codecs at the browser level, forcing sites like YouTube to serve `H.264`. This massively reduces CPU overhead on older hardware.
@@ -170,3 +170,9 @@ mv3/
 "Send to MPV" → Native Messaging → mpv_bridge.py → mpv process
                    (stdio JSON)    (cookie sync)    (detached)
 ```
+
+## Limitations
+
+- **Browser Support**: Currently supports **Brave Origin Nightly** and **Chromium**. Other browsers may work but are not tested.
+- **Age-Restricted Content**: The PASS_BROWSER_IDENTITY feature is experimental. Age-restricted YouTube videos may require additional setup with yt-dlp (PO token support) to work properly.
+- **Platform**: Currently Linux-only. macOS/Windows support would require installer modifications.

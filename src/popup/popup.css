@@ -1,11 +1,11 @@
 :root {
-  --bg-void: #020202;
-  --bg-hud: rgba(10, 10, 12, 0.75);
-  --crimson: #ff2a2a;
-  --crimson-dim: rgba(255, 42, 42, 0.2);
-  --crimson-glow: rgba(255, 42, 42, 0.6);
-  --text-core: #ffffff;
-  --text-data: #a0a0a0;
+  --bg-void: #050508;
+  --bg-hud: rgba(10, 10, 14, 0.65);
+  --crimson: #ff3333;
+  --crimson-dim: rgba(255, 51, 51, 0.25);
+  --crimson-glow: rgba(255, 51, 51, 0.5);
+  --text-core: #fcfcfc;
+  --text-data: #a8a8b0;
   --accent-cyan: #00e5ff;
   
   --font-hdr: 'Chakra Petch', sans-serif;
@@ -15,35 +15,38 @@
 
 html {
   background-color: var(--bg-void);
+  background-image: radial-gradient(circle at 50% -20%, rgba(255, 51, 51, 0.08) 0%, transparent 70%);
 }
 
 body {
   margin: 0;
   padding: 0;
   width: 380px;
-  background: var(--bg-void);
+  background: transparent;
   color: var(--text-core);
   font-family: var(--font-sys);
   font-size: 13px;
   position: relative;
   overflow-x: hidden;
   border: 1px solid var(--crimson-dim);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
 }
 
 /* Atmospheric / Scanner */
 .noise-bg {
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
   pointer-events: none;
   z-index: 100;
+  mix-blend-mode: overlay;
 }
 
 .crt-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 99;
@@ -56,26 +59,34 @@ body {
   right: 0;
   height: 2px;
   background: var(--crimson);
-  box-shadow: 0 0 10px 2px var(--crimson-glow);
-  opacity: 0.5;
+  box-shadow: 0 0 15px 3px var(--crimson-glow);
+  opacity: 0.2;
   pointer-events: none;
   z-index: 98;
-  animation: scan-vertical 10s infinite linear;
+  animation: scan-vertical 8s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 @keyframes scan-vertical {
-  0% { transform: translateY(-10px); }
-  100% { transform: translateY(600px); }
+  0% { transform: translateY(-10px); opacity: 0; }
+  10% { opacity: 0.2; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(600px); opacity: 0; }
 }
 
 /* HUD Layout */
 .hud-container {
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   position: relative;
   z-index: 10;
+  animation: container-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes container-enter {
+  from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .hud-frame-top {
@@ -135,7 +146,7 @@ body {
   font-weight: 700;
   letter-spacing: 4px;
   color: #fff;
-  text-shadow: 0 0 5px #fff, 0 0 15px var(--crimson);
+  text-shadow: 0 0 5px rgba(255,255,255,0.8), 0 0 12px var(--crimson-glow), 0 0 20px var(--crimson-glow);
 }
 
 .hud-btn-icon {
@@ -157,17 +168,19 @@ body {
 /* Panels */
 .hud-panel {
   background: var(--bg-hud);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--crimson-dim);
-  padding: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0, 0, 0, 0.4);
+  padding: 16px;
   position: relative;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-  transition: border-color 0.3s;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .hud-panel:hover {
-  border-color: var(--crimson);
+  border-color: rgba(255, 51, 51, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 .panel-deco-lines {
@@ -246,25 +259,32 @@ body {
 }
 
 .hud-action-btn {
-  background: rgba(255, 42, 42, 0.1);
-  border: 1px solid var(--crimson);
+  background: linear-gradient(180deg, rgba(255, 51, 51, 0.08) 0%, rgba(255, 51, 51, 0.02) 100%);
+  border: 1px solid var(--crimson-dim);
   color: var(--crimson);
   font-family: var(--font-hdr);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 2px;
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+  border-radius: 2px;
 }
 
 .hud-action-btn:hover {
-  background: var(--crimson);
+  background: rgba(255, 51, 51, 0.15);
+  border-color: var(--crimson);
   color: #fff;
-  box-shadow: 0 0 15px var(--crimson-glow);
+  box-shadow: 0 0 20px var(--crimson-dim);
+  text-shadow: 0 0 8px rgba(255,255,255,0.5);
+}
+
+.hud-action-btn:active {
+  transform: scale(0.98);
 }
 
 .btn-scan {
@@ -302,20 +322,22 @@ body {
 .data-card-container::-webkit-scrollbar-thumb { background: var(--crimson); }
 
 .data-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #222;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 2px solid #444;
-  padding: 8px;
+  padding: 10px;
   position: relative;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
 }
 
 .data-card:hover {
-  background: rgba(255, 42, 42, 0.05);
+  background: rgba(255, 51, 51, 0.06);
   border-color: var(--crimson-dim);
-  border-left-color: var(--crimson);
+  border-left: 4px solid var(--crimson);
+  transform: translateX(2px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
 .card-header {
@@ -389,7 +411,8 @@ body {
   overflow: hidden;
   text-shadow: 0 1px 2px rgba(0,0,0,0.8);
   box-shadow: 0 0 10px var(--crimson-glow);
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 2px;
 }
 
 .hud-execute-btn::before {
@@ -399,19 +422,23 @@ body {
   width: 50%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
   transform: skewX(-20deg);
-  animation: execute-shine 2s infinite;
+  animation: execute-shine 2.5s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 @keyframes execute-shine {
   0% { left: -100%; }
-  20% { left: 200%; }
+  30% { left: 200%; }
   100% { left: 200%; }
 }
 
 .hud-execute-btn:hover {
-  background: #ff4a4a;
-  box-shadow: 0 0 15px var(--crimson);
+  background: #ff4d4d;
+  box-shadow: 0 0 20px var(--crimson);
   animation: btn-txt-glitch 0.4s forwards;
+}
+
+.hud-execute-btn:active {
+  transform: scale(0.98);
 }
 
 @keyframes btn-txt-glitch {

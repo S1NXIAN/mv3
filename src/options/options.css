@@ -1,11 +1,11 @@
 :root {
-  --bg-void: #020202;
-  --bg-hud: rgba(10, 10, 12, 0.75);
-  --crimson: #ff2a2a;
-  --crimson-dim: rgba(255, 42, 42, 0.2);
-  --crimson-glow: rgba(255, 42, 42, 0.6);
-  --text-core: #ffffff;
-  --text-data: #a0a0a0;
+  --bg-void: #050508;
+  --bg-hud: rgba(10, 10, 14, 0.65);
+  --crimson: #ff3333;
+  --crimson-dim: rgba(255, 51, 51, 0.25);
+  --crimson-glow: rgba(255, 51, 51, 0.5);
+  --text-core: #fcfcfc;
+  --text-data: #a8a8b0;
   --accent-cyan: #00e5ff;
   
   --font-hdr: 'Chakra Petch', sans-serif;
@@ -15,12 +15,14 @@
 
 html {
   background-color: var(--bg-void);
+  background-image: radial-gradient(circle at 50% 0%, rgba(255, 51, 51, 0.08) 0%, transparent 60%);
+  background-attachment: fixed;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg-void);
+  background: transparent;
   color: var(--text-core);
   font-family: var(--font-sys);
   font-size: 14px;
@@ -33,16 +35,17 @@ body {
 .noise-bg {
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
   pointer-events: none;
   z-index: 100;
+  mix-blend-mode: overlay;
 }
 
 .crt-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
   background-size: 100% 4px;
   pointer-events: none;
   z-index: 99;
@@ -55,16 +58,18 @@ body {
   right: 0;
   height: 2px;
   background: var(--crimson);
-  box-shadow: 0 0 10px 2px var(--crimson-glow);
-  opacity: 0.3;
+  box-shadow: 0 0 15px 3px var(--crimson-glow);
+  opacity: 0.2;
   pointer-events: none;
   z-index: 98;
-  animation: scan-vertical 6s infinite linear;
+  animation: scan-vertical 10s infinite cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 @keyframes scan-vertical {
-  0% { transform: translateY(-10px); }
-  100% { transform: translateY(1200px); }
+  0% { transform: translateY(-10px); opacity: 0; }
+  10% { opacity: 0.2; }
+  90% { opacity: 0.2; }
+  100% { transform: translateY(1200px); opacity: 0; }
 }
 
 .container {
@@ -121,7 +126,7 @@ body {
   font-weight: 700;
   letter-spacing: 6px;
   color: #fff;
-  text-shadow: 0 0 5px #fff, 0 0 15px var(--crimson);
+  text-shadow: 0 0 5px rgba(255,255,255,0.8), 0 0 15px var(--crimson-glow), 0 0 25px var(--crimson-glow);
 }
 
 .subtitle {
@@ -169,13 +174,14 @@ body {
 /* HUD Panels */
 .hud-panel {
   background: var(--bg-hud);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--crimson-dim);
-  padding: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 30px rgba(0, 0, 0, 0.5);
+  padding: 24px;
   position: relative;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
-  transition: border-color 0.3s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   animation: panelEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
@@ -190,7 +196,9 @@ body {
 }
 
 .hud-panel:hover {
-  border-color: var(--crimson);
+  border-color: rgba(255, 51, 51, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 40px rgba(0, 0, 0, 0.6);
+  transform: translateY(-2px);
 }
 
 .panel-deco-lines {
@@ -260,21 +268,28 @@ label {
 .hud-input, .hud-select {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--crimson-dim);
   border-bottom: 2px solid var(--crimson-dim);
   color: #fff;
   font-family: var(--font-data);
   font-size: 13px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   outline: none;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 2px;
+}
+
+.hud-input:hover, .hud-select:hover {
+  background: rgba(255, 51, 51, 0.03);
+  border-color: rgba(255, 51, 51, 0.5);
 }
 
 .hud-input:focus, .hud-select:focus {
   border-color: var(--crimson);
-  background: rgba(255, 42, 42, 0.05);
-  box-shadow: 0 5px 15px -5px var(--crimson-glow);
+  background: rgba(255, 51, 51, 0.06);
+  box-shadow: 0 0 0 2px rgba(255, 51, 51, 0.1), 0 5px 15px -5px var(--crimson-glow);
+  transform: translateY(-1px);
 }
 
 .hud-select {
@@ -334,38 +349,40 @@ textarea.hud-input {
 }
 
 .toggle-track {
-  width: 40px;
-  height: 16px;
+  width: 44px;
+  height: 20px;
   background: rgba(0,0,0,0.8);
   border: 1px solid var(--crimson-dim);
   position: relative;
-  transition: border-color 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .toggle-thumb {
   position: absolute;
-  top: 1px; left: 1px;
-  width: 16px; height: 12px;
+  top: 2px; left: 2px;
+  width: 16px; height: 14px;
   background: var(--text-data);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%);
 }
 
 .hud-toggle input:checked + .toggle-track {
   border-color: var(--crimson);
-  box-shadow: inset 0 0 10px rgba(255, 42, 42, 0.2);
+  background: rgba(255, 51, 51, 0.1);
+  box-shadow: inset 0 0 10px rgba(255, 51, 51, 0.2);
 }
 
 .hud-toggle input:checked + .toggle-track .toggle-thumb {
-  transform: translateX(20px);
+  transform: translateX(22px);
   background: var(--crimson);
   box-shadow: 0 0 10px var(--crimson);
 }
 
 /* Buttons */
 .hud-action-btn {
-  background: rgba(255, 42, 42, 0.05);
+  background: linear-gradient(180deg, rgba(255, 51, 51, 0.08) 0%, rgba(255, 51, 51, 0.02) 100%);
   border: 1px solid var(--crimson-dim);
   color: var(--crimson);
   font-family: var(--font-hdr);
@@ -376,16 +393,22 @@ textarea.hud-input {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
   text-transform: uppercase;
+  border-radius: 2px;
 }
 
 .hud-action-btn:hover {
-  background: rgba(255, 42, 42, 0.15);
+  background: rgba(255, 51, 51, 0.15);
   border-color: var(--crimson);
   color: #fff;
-  box-shadow: 0 0 15px var(--crimson-glow);
+  box-shadow: 0 0 20px var(--crimson-dim);
+  text-shadow: 0 0 8px rgba(255,255,255,0.5);
+}
+
+.hud-action-btn:active {
+  transform: scale(0.98);
 }
 
 .btn-scan {
@@ -409,16 +432,16 @@ textarea.hud-input {
 }
 
 .hud-action-btn.primary {
-  background: rgba(255, 42, 42, 0.05);
-  border-color: rgba(255, 42, 42, 0.3);
+  background: linear-gradient(180deg, rgba(255, 51, 51, 0.1) 0%, rgba(255, 51, 51, 0.05) 100%);
+  border-color: rgba(255, 51, 51, 0.4);
   color: var(--crimson);
 }
 
 .hud-action-btn.primary:hover {
-  background: rgba(255, 42, 42, 0.15);
+  background: rgba(255, 51, 51, 0.2);
   border-color: var(--crimson);
   color: #fff;
-  box-shadow: 0 0 15px rgba(255, 42, 42, 0.4);
+  box-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
 }
 
 .hud-action-btn.danger {

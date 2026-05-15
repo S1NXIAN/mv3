@@ -7,16 +7,17 @@
 
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-3c873a?style=flat-square)](#)
   [![Platform](https://img.shields.io/badge/Platform-Linux-cc3333?style=flat-square)](#)
+  [![Version](https://img.shields.io/badge/Version-2.3.8-00e5ff?style=flat-square)](#)
   [![Browser](https://img.shields.io/badge/Browser-Chrome%20|%20Brave%20|%20Edge%20|%20Vivaldi%20|%20Opera%20|%20Firefox-478ce1?style=flat-square)](#)
-  [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-  [Features](#features) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture)
-
+  [Features](#features) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture)
 </div>
 
 ---
 
-A Manifest V3 browser extension that intercepts HLS video streams (`.m3u8`) and routes them to your local [mpv](https://mpv.io/) media player via Native Messaging. Supports DRM-protected streams through browser identity forwarding, codec enforcement via h264ify, and advanced renderer overrides — all wrapped in an animated cyberpunk HUD.
+A Manifest V3 browser extension that bridges the gap between the browser sandbox and your local machine. MV3 intercepts HLS video streams (`.m3u8`) and web videos, routing them instantly to your local [mpv](https://mpv.io/) media player via Native Messaging. 
+
+By passing browser identity and cookies down to `yt-dlp` and `mpv`, this extension provides a seamless, native playback experience that natively supports DRM-protected streams and subscription services, all wrapped in a high-performance "Terminal Editorial" cyberpunk HUD.
 
 <div align="center">
   <img src="screenshots/ss1.png" width="390" alt="HUD — Idle State">
@@ -28,50 +29,64 @@ A Manifest V3 browser extension that intercepts HLS video streams (`.m3u8`) and 
 
 ## Features
 
-- **HLS Stream Interception** — Sniffs `.m3u8` manifests in real-time using the `webRequest` API. Classifies streams as master or media playlists and presents them in the popup HUD.
-- **Identity Forwarding** — Passes browser cookies and User-Agent to mpv, enabling playback of DRM-protected and authenticated streams from subscription services.
-- **Codec Enforcement** — h264ify integration blocks VP8/VP9/AV1 at the browser level, forcing H.264 fallback for reduced CPU usage on older hardware.
-- **Renderer Overrides** — Fine-tune `--hwdec`, `--vo`, `--ytdl-format`, and custom CLI flags directly from the options terminal. "Inherit" mode defers to your `mpv.conf`.
-- **Context Menu Integration** — Right-click any page, link, video, or audio element to dispatch it to mpv instantly.
+- **Real-Time HLS Interception**  
+  Sniffs `.m3u8` manifests directly from the network using the `webRequest` API. Automatically classifies streams as master or media playlists and presents them in the popup HUD.
+  
+- **Identity Forwarding (Cookie Sync)**  
+  Seamlessly passes your active browser session (cookies and User-Agent) to the native `mpv` process. This enables playback of authenticated or age-restricted streams from premium services without requiring manual token extraction.
+
+- **Codec Enforcement (h264ify)**  
+  Injects isolated scripts to block `VP8`, `VP9`, and `AV1` codecs at the browser level, forcing sites like YouTube to serve `H.264`. This massively reduces CPU overhead on older hardware.
+
+- **Terminal Editorial UI & Docs**  
+  A completely bespoke, cyberpunk-inspired brutalist configuration HUD. Includes a beautifully designed `System Parameters` documentation panel to help you configure advanced `mpv` overrides effortlessly.
+
+- **Contextual Dispatch**  
+  Right-click any page, link, video, or audio element to instantly dispatch the target URL to the native player.
 
 ## Prerequisites
 
 | Requirement | Purpose |
 |---|---|
-| **Linux** | Only supported platform |
-| **python3** | Runs the native messaging host |
-| **[mpv](https://mpv.io/)** | Media player target |
-| **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** | Video extraction backend used by mpv |
-| A supported browser | See table below |
+| **Linux** | The native host installer currently relies on Linux-specific manifest paths. |
+| **python3** | Powers the native messaging host intermediary script. |
+| **[mpv](https://mpv.io/)** | The target kernel media player. |
+| **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** | The video extraction backend utilized by `mpv`. |
 
 ## Installation
 
-Setup involves two steps: loading the extension and registering the native messaging host.
+The system requires two components: the browser extension itself, and a native messaging host that allows the browser to securely talk to the underlying OS.
 
-### 1. Load the Extension
+### 1. Load the Browser Extension
 
-1. Clone this repository.
-2. Open your browser's extension page:
-   - Chromium-based: `chrome://extensions`
-   - Firefox-based: `about:debugging#/runtime/this-firefox`
+1. Clone this repository to your local machine.
+2. Open your browser's extension management page:
+   - Chromium-based: Navigate to `chrome://extensions`
+   - Firefox-based: Navigate to `about:debugging#/runtime/this-firefox`
 3. Enable **Developer mode** (Chromium) or click **Load Temporary Add-on** (Firefox).
-4. Select the root directory of this repository.
+4. Select the root directory of this repository to load the unpacked extension.
 
-### 2. Install the Native Host
+> [!TIP]
+> **Find your Extension ID**  
+> You will need this for the next step.
+> - **Chromium:** Enable Developer Mode, look at the MV3 extension card, and copy the `ID`.
+> - **Firefox:** Look at the MV3 extension card and copy the `Internal UUID`.
 
-The included interactive installer auto-detects your browsers and registers the native messaging manifest.
+### 2. Register the Native Host
+
+The extension ships with an interactive CLI installer that auto-detects your browser variants and registers the native messaging manifest securely.
 
 ```bash
 cd native_host
 ./install.sh
 ```
 
-The installer will walk you through browser selection and extension ID entry.
+Follow the on-screen terminal prompts. You will be asked to select your target browser and paste the Extension ID you copied in step 1.
 
 <details>
-<summary><strong>Supported browsers</strong></summary>
+<summary><strong>View all supported browsers</strong></summary>
 
-| Chromium-based | Firefox-based |
+| Chromium Architecture | Firefox Architecture |
 |---|---|
 | Google Chrome (+ Beta, Dev) | Firefox |
 | Chromium / Ungoogled Chromium | Zen Browser |
@@ -83,89 +98,75 @@ The installer will walk you through browser selection and extension ID entry.
 
 </details>
 
-> [!TIP]
-> **Finding your Extension ID:**
-> - Chromium: `chrome://extensions` → enable Developer Mode → copy ID
-> - Firefox: `about:debugging#/runtime/this-firefox` → copy Internal UUID
+### 3. Verify System Connection
 
-### 3. Verify Connection
+Open the extension's popup, click the hexagon icon to open the **Options Terminal**, and click **[ PING NATIVE HOST ]** under the diagnostics panel. A successful handshake will output a green `✓ CONNECTED` signal.
 
-Open the extension's options page and click **[ PING NATIVE HOST ]** under the diagnostics panel. A successful connection shows `✓ CONNECTED`.
-
-To uninstall all manifests later:
-```bash
-cd native_host
-python3 installer_tui.py --uninstall
-```
+> [!NOTE]
+> To completely remove the native messaging manifests from your system later, you can run:
+> ```bash
+> cd native_host
+> python3 installer_tui.py --uninstall
+> ```
 
 ## Configuration
 
-The extension is controlled through two interfaces: the **popup HUD** (stream interception and dispatch) and the **options terminal** (system configuration).
+Configuration is handled entirely through the Options Terminal. 
 
-> [!TIP]
-> Access the options terminal directly from the popup by clicking the hexagon icon in the top-right corner.
+### Advanced Mode
 
-### Basic Options
+Toggling **Advanced Mode** unlocks the renderer overrides and CLI configurations.
 
-| Option | Description | Default |
+| Target Parameter | mpv Flag Equivalent | System Behavior when unset |
 |---|---|---|
-| **HLS Sniffer** | Intercept `.m3u8` manifests via `webRequest` | Enabled |
-| **Pass Browser Identity** | Forward cookies and User-Agent to mpv (required for DRM) | Enabled |
-| **Force H264** | Block VP8/VP9/AV1 codecs in the browser | Disabled |
-
-### Advanced Options
-
-Enable **Advanced Mode** in the options terminal to reveal renderer and flag overrides.
-
-| Option | mpv Flag | Behavior when unset |
-|---|---|---|
-| HW Decoder | `--hwdec` | Inherits from `mpv.conf` |
-| Video Output | `--vo` | Inherits from `mpv.conf` |
-| Always On Top | `--ontop` | Inherits from `mpv.conf` |
-| YTDL Format | `--ytdl-format` | Inherits from `mpv.conf` |
-| Custom CLI Flags | Raw flags | None added |
+| HW Decoder | `--hwdec` | Defers to your local `mpv.conf` |
+| Video Output | `--vo` | Defers to your local `mpv.conf` |
+| Always On Top | `--ontop` | Defers to your local `mpv.conf` |
+| YTDL Format | `--ytdl-format` | Defers to your local `mpv.conf` |
+| Custom CLI Flags | Raw injected string | None |
 
 > [!IMPORTANT]
-> Only explicitly configured options produce CLI flags. Everything left at "Inherit" or blank defers to your `mpv.conf`, so your existing mpv setup is never disrupted.
+> The extension is strictly non-destructive. Any parameter left blank or set to "Inherit" will quietly defer to your existing `~/.config/mpv/mpv.conf`. Your local configurations are always respected.
+
+### System Directives
+
+Click **[ VIEW DOCS ]** in the configuration panel to access the `SYSTEM PARAMETERS` guide. This built-in documentation provides copy-pasteable snippets for useful CLI flags like `--autofit=50%`, `--save-position-on-quit`, and `--ytdl-raw-options="mark-watched="`.
 
 ## Architecture
 
-```
+The system utilizes a service worker to aggressively cache and clean up stream states, while a Python daemon passes commands directly to the OS shell.
+
+```text
 mv3/
 ├── manifest.json                    # Extension manifest (MV3)
 ├── src/
-│   ├── background/                  # Service worker (modular)
+│   ├── background/                  # Background Service Worker 
 │   │   ├── background.js            # Entry point — wires modules via importScripts
-│   │   ├── config.js                # Config cache with TTL + h264ify lifecycle
-│   │   ├── badge.js                 # Icon state controller with debouncing
-│   │   ├── tab-state.js             # Per-tab HLS state (memory + session storage)
+│   │   ├── config.js                # Shared configuration state
+│   │   ├── badge.js                 # HUD icon state controller
+│   │   ├── tab-state.js             # High-performance HLS state cache
 │   │   ├── hls-sniffer.js           # webRequest-based .m3u8 detection
-│   │   ├── native-messaging.js      # mpv dispatch, cookie merging, context menu
-│   │   └── message-router.js        # Internal message handler (popup ↔ SW)
-│   ├── popup/                       # HUD interface
-│   ├── options/                     # Configuration terminal
-│   ├── scripts/
-│   │   └── h264ify.js               # Codec blocking content script (MAIN world)
-│   └── utils/
-│       ├── config-defaults.js       # Shared config defaults (single source of truth)
-│       ├── storage-utils.js         # Session storage abstraction
-│       └── ui-utils.js              # Glitch effects and clipboard helpers
+│   │   ├── native-messaging.js      # OS dispatch and cookie merging
+│   │   └── message-router.js        # Internal message bus
+│   ├── content/                     # DOM parsers
+│   ├── popup/                       # Stream Interceptor HUD
+│   ├── options/                     # Configuration Terminal
+│   ├── docs/                        # System Parameters Documentation
+│   └── utils/                       # Shared UI and state utilities
 ├── native_host/
-│   ├── install.sh                   # Installer entry point
-│   ├── installer_tui.py             # Interactive TUI installer (18 browsers)
-│   └── mpv_bridge.py                # Native messaging host (stdio JSON protocol)
-└── icons/
-    ├── idle/                        # Default extension icon
-    └── active/                      # Icon when streams detected
+│   ├── install.sh                   # Bash bootstrap
+│   ├── installer_tui.py             # TUI interactive browser registry
+│   └── mpv_bridge.py                # Native messaging host daemon
+└── icons/                           # Dynamic state icons
 ```
 
-### Data Flow
+### Protocol Data Flow
 
-```
-Browser Tab → webRequest API → HLS Sniffer → Tab State Cache
-                                                    ↓
-Popup HUD ← Message Router ← Service Worker → Badge Controller
-    ↓
+```text
+[ Browser Tab ] → webRequest API → HLS Sniffer → Local Storage Cache
+                                                        ↓
+[ Popup HUD ] ← Message Router ← Service Worker → Badge Controller
+      ↓
 "Send to MPV" → Native Messaging → mpv_bridge.py → mpv process
-                  (stdio JSON)     (cookie file)    (detached)
+                   (stdio JSON)    (cookie sync)    (detached)
 ```

@@ -340,7 +340,9 @@ def install_manifest(browser, host_path, ext_id):
 
 def uninstall_manifests():
     """Remove all installed MV3 native messaging host manifests."""
-    removed = 0
+    # Build deduplicated list of manifest paths
+    found = []
+    seen = set()
     for entry in BROWSER_REGISTRY:
         resolved = os.path.expanduser(entry["path"])
         if entry["engine"] == "chromium":
@@ -348,19 +350,43 @@ def uninstall_manifests():
         else:
             manifest_path = os.path.join(resolved, f"{HOST_NAME}.json")
 
-        if os.path.isfile(manifest_path):
-            try:
-                os.remove(manifest_path)
-                print_ok(f"Removed: {manifest_path}")
-                removed += 1
-            except OSError as e:
-                print_err(f"Failed to remove {manifest_path}: {e}")
+        if manifest_path in seen:
+            continue
+        seen.add(manifest_path)
 
-    if removed == 0:
-        print_info("No installed manifests found.")
+        if os.path.isfile(manifest_path):
+            found.append(manifest_path)
+
+    if not found:
+        print_info("No installed manifests found. Nothing to do.")
+        return
+
+    for path in found:
+        print_info(f"  • {path}")
+    print()
+
+    sys.stdout.write(f"     Remove {len(found)} manifest(s)? [y/N] ")
+    sys.stdout.flush()
+    ans = input().strip().lower()
+    if ans not in ('y', 'yes'):
+        print_err("Aborted.")
+        return
+
+    print()
+    removed = 0
+    for path in found:
+        try:
+            os.remove(path)
+            print_ok(f"Removed: {path}")
+            removed += 1
+        except OSError as e:
+            print_err(f"Failed to remove {path}: {e}")
+
+    print()
+    if removed == len(found):
+        print_ok(f"Cleanly removed {removed} manifest(s).")
     else:
-        print()
-        print_ok(f"Removed {removed} manifest(s).")
+        print_warn(f"Removed {removed}/{len(found)} manifest(s).")
 
 
 # ── Main Flow ──────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "MV3",
-  "version": "1.1.0",
-  "description": "Cyberpunk-themed browser extension that routes HLS network streams and web videos directly to your local MPV media player.",
+  "version": "2.0.0",
+  "description": "Intercept HLS streams and route any web video to your local MPV player. Supports DRM via cookie/identity forwarding, codec enforcement (h264ify), and advanced renderer overrides.",
   "permissions": [
     "nativeMessaging",
     "webRequest",

@@ -386,6 +386,13 @@ def main():
     else:
         print_warn("mpv not found in PATH — install it before using the extension")
 
+    # Check yt-dlp
+    ytdlp_bin = shutil.which('yt-dlp')
+    if ytdlp_bin:
+        print_ok(f"yt-dlp found at {ytdlp_bin}")
+    else:
+        print_warn("yt-dlp not found in PATH — required for YouTube and most video sites")
+
     # Locate and prepare host script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     host_path = os.path.join(script_dir, "mpv_bridge.py")

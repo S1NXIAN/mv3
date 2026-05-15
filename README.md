@@ -41,6 +41,7 @@ A Manifest V3 browser extension that intercepts HLS video streams (`.m3u8`) and 
 | **Linux** | Only supported platform |
 | **python3** | Runs the native messaging host |
 | **[mpv](https://mpv.io/)** | Media player target |
+| **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** | Video extraction backend used by mpv |
 | A supported browser | See table below |
 
 ## Installation

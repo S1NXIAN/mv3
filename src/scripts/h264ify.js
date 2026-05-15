@@ -34,8 +34,8 @@
     });
   };
 
-  const originalCanPlayType = HTMLVideoElement.prototype.canPlayType;
-  HTMLVideoElement.prototype.canPlayType = function(type) {
+  const originalCanPlayType = HTMLMediaElement.prototype.canPlayType;
+  HTMLMediaElement.prototype.canPlayType = function(type) {
     if (isBlocked(type)) return "";
     return originalCanPlayType.apply(this, arguments);
   };

@@ -5,6 +5,8 @@
  * renders detected m3u8 URLs, and dispatches "send to MPV" commands.
  */
 
+const TOAST_DISPLAY_MS = 2200;
+
 document.addEventListener("DOMContentLoaded", init);
 
 let _glitchTimeouts = [];
@@ -54,7 +56,7 @@ async function init() {
     }
   );
 
-  chrome.storage.sync.get({ snifferEnabled: true }, (config) => {
+  chrome.storage.sync.get(MV3_CONFIG_DEFAULTS, (config) => {
     if (!config.snifferEnabled) {
       const streamPanel = document.querySelector(".stream-panel");
       if (streamPanel) {
@@ -197,7 +199,7 @@ function showToast(message, type) {
   setTimeout(() => {
     toast.classList.add("toast-out");
     toast.addEventListener("animationend", () => toast.remove());
-  }, 2200);
+  }, TOAST_DISPLAY_MS);
 }
 
 /* ── Helpers ── */
@@ -216,6 +218,4 @@ function truncateUrl(url, maxLen) {
   }
 }
 
-/* ── UI Helpers ── */
 
-// Local helpers moved to ui-utils.js

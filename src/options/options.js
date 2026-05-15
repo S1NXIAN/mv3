@@ -2,19 +2,8 @@
  * options.js — SYS.CONSOLE_CONFIG
  */
 
-const DEFAULTS = {
-  mpvPath: "/usr/bin/mpv",
-  hostName: "com.mpvbridge.native",
-  defaultFlags: [],
-  snifferEnabled: true,
-  passIdentity: true,
-  forceH264: false,
-  hwDec: "",
-  vo: "",
-  alwaysOnTop: false,
-  ytdlFormat: "",
-  advancedMode: false,
-};
+const DEFAULTS = MV3_CONFIG_DEFAULTS;
+const CONNECTION_TIMEOUT_MS = 5000;
 
 const _glitchTimeouts = [];
 let _isSaving = false;
@@ -202,7 +191,7 @@ async function testConnection() {
   let timeoutId = setTimeout(() => {
     resultEl.textContent = "✗ TIMEOUT - No response from native host";
     resultEl.className = "vfd-status error";
-  }, 5000);
+  }, CONNECTION_TIMEOUT_MS);
 
   chrome.runtime.sendNativeMessage(
     hostName,
@@ -236,6 +225,4 @@ function flashToast(message) {
   toast.hideTimeout = setTimeout(() => toast.classList.add("hidden"), 2000);
 }
 
-/* ── UI Helpers ── */
 
-// Local helpers moved to ui-utils.js

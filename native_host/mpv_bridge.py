@@ -117,7 +117,7 @@ def handle_play(message):
     if cookies and isinstance(cookies, list):
         try:
             current_time = int(time.time())
-            valid_cookies = [c for c in cookies if c.get('expirationDate', 0) >= current_time]
+            valid_cookies = [c for c in cookies if c.get('session', False) or c.get('expirationDate', 0) >= current_time]
 
             if valid_cookies:
                 cookie_file = tempfile.NamedTemporaryFile(

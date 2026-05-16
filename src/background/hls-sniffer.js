@@ -19,25 +19,46 @@ const HLS_MIME_TYPES = [
   "audio/x-mpegurl",
 ];
 
-chrome.webRequest.onCompleted.addListener(
-  handleRequestCompleted,
-  { urls: ["*://*/*.m3u8", "*://*/*.m3u8?*", "*://*/*.m3u8#*"] }
-);
+const SNIFFER_ONCOMPLETED_FILTER = {
+  urls: ["*://*/*.m3u8", "*://*/*.m3u8?*", "*://*/*.m3u8#*"]
+};
+const SNIFFER_ONHEADERS_FILTER = {
+  urls: ["<all_urls>"],
+  types: ["xmlhttprequest", "media", "other"]
+};
+const SNIFFER_EXTRA = ["responseHeaders"];
 
-chrome.webRequest.onHeadersReceived.addListener(
-  handleMimeBasedDetection,
-  { urls: ["<all_urls>"], types: ["xmlhttprequest", "media", "other"] },
-  ["responseHeaders"]
-);
+let _snifferRegistered = false;
+
+async function syncSniffer() {
+  try {
+    const config = await getConfig();
+    if (config.snifferEnabled && !_snifferRegistered) {
+      chrome.webRequest.onCompleted.addListener(handleRequestCompleted, SNIFFER_ONCOMPLETED_FILTER);
+      chrome.webRequest.onHeadersReceived.addListener(handleMimeBasedDetection, SNIFFER_ONHEADERS_FILTER, SNIFFER_EXTRA);
+      _snifferRegistered = true;
+    } else if (!config.snifferEnabled && _snifferRegistered) {
+      chrome.webRequest.onCompleted.removeListener(handleRequestCompleted);
+      chrome.webRequest.onHeadersReceived.removeListener(handleMimeBasedDetection);
+      _snifferRegistered = false;
+    }
+  } catch (err) {
+    console.error("[MV3 Bridge] Failed to sync sniffer:", err);
+  }
+}
+
+syncSniffer();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && "snifferEnabled" in changes) {
+    syncSniffer();
+  }
+});
 
 async function handleRequestCompleted(details) {
   try {
     const { tabId, url } = details;
     if (tabId < 0) return;
-
-    const config = await getConfig();
-    if (!config.snifferEnabled) return;
-
     await classifyAndStore(tabId, url);
   } catch (err) {
     console.error("[MV3 Bridge] handleRequestCompleted error:", err);
@@ -58,9 +79,6 @@ async function handleMimeBasedDetection(details) {
 
     const mime = contentType.value.toLowerCase().split(";")[0].trim();
     if (!HLS_MIME_TYPES.includes(mime)) return;
-
-    const config = await getConfig();
-    if (!config.snifferEnabled) return;
 
     await classifyAndStore(tabId, url);
   } catch (err) {

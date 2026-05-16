@@ -63,7 +63,7 @@ async function init() {
 
   chrome.storage.sync.get(MV3_CONFIG_DEFAULTS, (config) => {
     if (!config.snifferEnabled) {
-      const streamPanel = document.querySelector(".stream-panel");
+      const streamPanel = document.querySelector(".intercept-grid");
       if (streamPanel) {
         streamPanel.style.display = "none";
       }

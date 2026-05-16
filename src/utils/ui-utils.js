@@ -89,7 +89,7 @@ self.MV3_UI = (function() {
                 }).join("");
 
                 iterationsOut += 1;
-                if (iterationsOut > original.length + 1) {
+                if (iterationsOut >= original.length) {
                   clearInterval(intervalOut);
                   element.textContent = original;
                   element.classList.remove("url-glitch");

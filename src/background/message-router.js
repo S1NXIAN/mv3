@@ -28,7 +28,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendToMpv(message.url, message.flags || [], referer)
         .then((result) => sendResponse(result))
         .catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
-    });
+    }).catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
     return true;
   }
 

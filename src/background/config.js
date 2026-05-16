@@ -27,6 +27,9 @@ async function getConfig(forceRefresh = false) {
     _configCacheTime = Date.now();
     _configPromise = null;
     return config;
+  }).catch(err => {
+    _configPromise = null;
+    throw err;
   });
   return _configPromise;
 }

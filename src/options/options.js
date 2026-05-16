@@ -19,13 +19,11 @@ async function loadSettings() {
 
     const manifest = chrome.runtime.getManifest();
     const versionEl = document.getElementById("app-version");
-    if (!versionEl) {
-      console.error("[MV3 Bridge] Version element not found");
-      return;
+    if (versionEl) {
+      const versionStr = `v${manifest.version}`;
+      versionEl.textContent = versionStr;
+      _glitchTimeouts.push(...MV3_UI.initRandomGlitch(versionEl, versionStr));
     }
-    const versionStr = `v${manifest.version}`;
-    versionEl.textContent = versionStr;
-    _glitchTimeouts.push(...MV3_UI.initRandomGlitch(versionEl, versionStr));
 
     const mpvPathEl = document.getElementById("input-mpv-path");
     const hostNameEl = document.getElementById("input-host-name");

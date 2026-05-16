@@ -10,6 +10,8 @@
 
 const MASTER_PLAYLIST_REGEX = /#EXT-X-STREAM-INF/;
 const MEDIA_PLAYLIST_REGEX = /#EXTINF/;
+const PLAYLIST_FETCH_TIMEOUT_MS = 10000;
+
 const HLS_MIME_TYPES = [
   "application/x-mpegurl",
   "application/vnd.apple.mpegurl",
@@ -29,40 +31,50 @@ chrome.webRequest.onHeadersReceived.addListener(
 );
 
 async function handleRequestCompleted(details) {
-  const { tabId, url } = details;
-  if (tabId < 0) return;
+  try {
+    const { tabId, url } = details;
+    if (tabId < 0) return;
 
-  const config = await getConfig();
-  if (!config.snifferEnabled) return;
+    const config = await getConfig();
+    if (!config.snifferEnabled) return;
 
-  await classifyAndStore(tabId, url);
+    await classifyAndStore(tabId, url);
+  } catch (err) {
+    console.error("[MV3 Bridge] handleRequestCompleted error:", err);
+  }
 }
 
 async function handleMimeBasedDetection(details) {
-  const { tabId, url, responseHeaders } = details;
-  if (tabId < 0 || !responseHeaders) return;
+  try {
+    const { tabId, url, responseHeaders } = details;
+    if (tabId < 0 || !responseHeaders) return;
 
-  if (/\.m3u8(\?|#|$)/.test(url)) return;
+    if (/\.m3u8(\?|#|$)/.test(url)) return;
 
-  const contentType = responseHeaders.find(
-    (h) => h.name.toLowerCase() === "content-type"
-  );
-  if (!contentType) return;
+    const contentType = responseHeaders.find(
+      (h) => h.name.toLowerCase() === "content-type"
+    );
+    if (!contentType) return;
 
-  const mime = contentType.value.toLowerCase().split(";")[0].trim();
-  if (!HLS_MIME_TYPES.includes(mime)) return;
+    const mime = contentType.value.toLowerCase().split(";")[0].trim();
+    if (!HLS_MIME_TYPES.includes(mime)) return;
 
-  const config = await getConfig();
-  if (!config.snifferEnabled) return;
+    const config = await getConfig();
+    if (!config.snifferEnabled) return;
 
-  await classifyAndStore(tabId, url);
+    await classifyAndStore(tabId, url);
+  } catch (err) {
+    console.error("[MV3 Bridge] handleMimeBasedDetection error:", err);
+  }
 }
 
 async function detectPlaylistType(url) {
   try {
-    const response = await fetch(url, { credentials: "include" });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), PLAYLIST_FETCH_TIMEOUT_MS);
+    const response = await fetch(url, { credentials: "include", signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!response.ok) return "unknown";
-    
     const text = await response.text();
     if (MASTER_PLAYLIST_REGEX.test(text)) return "master";
     if (MEDIA_PLAYLIST_REGEX.test(text)) return "media";

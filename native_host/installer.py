@@ -257,6 +257,7 @@ def prompt_extension_id() -> str:
 def _build_manifest(host_path: str, ext_id: str) -> dict:
     return {
         "name": HOST_NAME,
+        "description": "MV3 Native Messaging Host — browser-to-mpv relay",
         "path": host_path,
         "type": "stdio",
         "allowed_origins": [f"chrome-extension://{ext_id}/"],

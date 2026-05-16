@@ -164,9 +164,16 @@ function sendUrl(url, btnEl) {
     btnEl.textContent = "[ TRANSMITTING ]";
   }
 
+  const timeoutId = setTimeout(() => {
+    btnEl.classList.remove("sending");
+    btnEl.innerHTML = originalHtml;
+    showToast("ERR: TX_TIMEOUT", "error");
+  }, 10000);
+
   chrome.runtime.sendMessage(
     { action: "sendToMpv", url },
     (result) => {
+      clearTimeout(timeoutId);
       btnEl.classList.remove("sending");
       btnEl.innerHTML = originalHtml;
 

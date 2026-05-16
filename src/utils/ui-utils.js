@@ -41,13 +41,15 @@ self.MV3_UI = (function() {
   /**
    * Applies a scramble effect and copies text to clipboard.
    * @param {HTMLElement} element 
-   * @param {string} textToCopy 
+   * @param {textToCopy} textToCopy 
    * @param {Function} onError 
    */
   function applyScrambleCopy(element, textToCopy, onError) {
     if (!textToCopy) return;
+    if (element.dataset.mv3ScrambleBound) return;
+    element.dataset.mv3ScrambleBound = "true";
     element.style.cursor = "pointer";
-    element.addEventListener("click", () => {
+    const handler = () => {
       if (element.classList.contains("url-glitch")) return;
 
       navigator.clipboard.writeText(textToCopy).then(() => {
@@ -90,7 +92,8 @@ self.MV3_UI = (function() {
       }).catch(() => {
         if (onError) onError("ERR: CLIPBOARD_FAIL");
       });
-    });
+    };
+    element.addEventListener("click", handler, { once: true });
   }
 
   return {

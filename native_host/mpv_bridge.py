@@ -59,7 +59,7 @@ def _cleanup_stale_cookies():
 
 def _escape_cookie_value(value):
     """Escape cookie value for Netscape format (handles special characters)."""
-    return value.replace('\t', '\u0009').replace('\n', '\u000A').replace('\r', '\u000D')
+    return value.replace('\\', '\\\\').replace(',', '\\,').replace('\t', '\\t').replace('\n', '\\n').replace('\r', '\\r')
 
 
 def read_message():
@@ -112,13 +112,17 @@ def handle_play(message):
         cmd.append(f"--referrer={referer}")
 
     socket_timeout = message.get('socketTimeout', 30)
-    ytdl_opts = [f'socket-timeout={int(socket_timeout)}']
+    try:
+        socket_timeout = max(1, int(socket_timeout))
+    except (ValueError, TypeError):
+        socket_timeout = 30
+    ytdl_opts = [f'socket-timeout={socket_timeout}']
 
     cookie_file = None
     if cookies and isinstance(cookies, list):
         try:
             current_time = int(time.time())
-            valid_cookies = [c for c in cookies if c.get('session', False) or c.get('expirationDate', 0) >= current_time]
+            valid_cookies = [c for c in cookies if isinstance(c, dict) and (c.get('session', False) or c.get('expirationDate', 0) >= current_time)]
 
             if valid_cookies:
                 cookie_file = tempfile.NamedTemporaryFile(
@@ -130,7 +134,10 @@ def handle_play(message):
                     domain = c.get('domain', '')
                     path = c.get('path', '/')
                     secure = "TRUE" if c.get('secure') else "FALSE"
-                    expires = int(c.get('expirationDate', 0))
+                    try:
+                        expires = int(c.get('expirationDate', 0) or 0)
+                    except (ValueError, TypeError):
+                        expires = 0
                     name = _escape_cookie_value(c.get('name', ''))
                     value = _escape_cookie_value(c.get('value', ''))
 

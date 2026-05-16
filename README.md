@@ -73,7 +73,8 @@ The system consists of two components: the browser extension and a native messag
 
 ```bash
 cd native_host
-./install.sh
+chmod +x installer.py
+./installer.py
 ```
 
 Follow the interactive prompts to select your browser and paste the Extension ID.
@@ -85,8 +86,7 @@ Open the extension popup, navigate to **Options**, and click **[ PING NATIVE HOS
 > [!NOTE]
 > To uninstall later:
 > ```bash
-> cd native_host
-> python3 installer_tui.py --uninstall
+> ./installer.py --uninstall
 > ```
 
 ## Configuration
@@ -136,8 +136,7 @@ mv3/
 │   ├── docs/                     # Documentation panel
 │   └── utils/                    # Shared utilities
 ├── native_host/
-│   ├── install.sh               # Bootstrap script
-│   ├── installer_tui.py         # Interactive installer
+│   ├── installer.py              # Interactive installer
 │   └── mpv_bridge.py            # Native messaging host
 └── icons/                        # State icons
 ```

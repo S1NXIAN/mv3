@@ -30,9 +30,10 @@ function clearBadgeTimeout(tabId) {
 
 function debouncedBadgeUpdate(tabId, state) {
   clearBadgeTimeout(tabId);
-  badgeUpdateTimeouts.set(tabId, setTimeout(() => {
+  badgeUpdateTimeouts.set(tabId, setTimeout(async () => {
     badgeUpdateTimeouts.delete(tabId);
-    updateBadge(tabId, state);
+    const currentState = await getTabState(tabId);
+    updateBadge(tabId, currentState);
   }, BADGE_DEBOUNCE_MS));
 }
 

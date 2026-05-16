@@ -62,6 +62,7 @@ async function syncH264ify() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync") {
     _configCache = null;
+    _configPromise = null;
     if (changes.forceH264) {
       syncH264ify();
     }

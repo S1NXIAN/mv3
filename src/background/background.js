@@ -14,8 +14,8 @@
 importScripts(
   "../utils/config-defaults.js",
   "config.js",
-  "badge.js",
   "tab-state.js",
+  "badge.js",
   "hls-sniffer.js",
   "native-messaging.js",
   "message-router.js"

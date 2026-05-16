@@ -4,6 +4,8 @@
 
 const DEFAULTS = MV3_CONFIG_DEFAULTS;
 const CONNECTION_TIMEOUT_MS = 5000;
+const TOAST_DISPLAY_MS = 2000;
+const ADVANCED_FADE_MS = 300;
 
 const _glitchTimeouts = [];
 let _isSaving = false;
@@ -85,7 +87,7 @@ async function loadSettings() {
             el.classList.add("glitch-out");
             setTimeout(() => {
               if (!advToggle.checked) el.style.display = "none";
-            }, 300);
+            }, ADVANCED_FADE_MS);
           }
         });
       });
@@ -235,7 +237,7 @@ function flashToast(message) {
   toast.textContent = message;
   toast.classList.remove("hidden");
   if (toast.hideTimeout) clearTimeout(toast.hideTimeout);
-  toast.hideTimeout = setTimeout(() => toast.classList.add("hidden"), 2000);
+  toast.hideTimeout = setTimeout(() => toast.classList.add("hidden"), TOAST_DISPLAY_MS);
 }
 
 

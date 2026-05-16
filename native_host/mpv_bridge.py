@@ -20,7 +20,6 @@ import time
 import tempfile
 import shutil
 import atexit
-from urllib.parse import urlparse
 
 
 COOKIE_PREFIX = 'mv3_cookies_'

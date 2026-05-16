@@ -6,6 +6,11 @@
  */
 
 const TOAST_DISPLAY_MS = 2200;
+const SEND_TIMEOUT_MS = 10000;
+const CARD_STAGGER_MS = 40;
+const PAGE_URL_TRUNCATE_LEN = 48;
+const CARD_URL_TRUNCATE_LEN = 40;
+const STREAM_TYPE_ORDER = { master: 0, media: 1, unknown: 2 };
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -32,7 +37,7 @@ async function init() {
     return;
   }
 
-  const displayUrl = truncateUrl(tab.url, 48);
+  const displayUrl = truncateUrl(tab.url, PAGE_URL_TRUNCATE_LEN);
   if (pageUrlEl) {
     pageUrlEl.textContent = displayUrl;
     pageUrlEl.title = tab.url;
@@ -100,15 +105,14 @@ function renderStreams(state) {
   listEl.replaceChildren();
 
   // Sort: masters first, then media, then unknown
-  const typeOrder = { master: 0, media: 1, unknown: 2 };
   const sorted = [...state.urls].sort(
-    (a, b) => (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3)
+    (a, b) => (STREAM_TYPE_ORDER[a.type] ?? 3) - (STREAM_TYPE_ORDER[b.type] ?? 3)
   );
 
   sorted.forEach((entry, index) => {
     const card = document.createElement("div");
     card.className = "data-card" + (entry.type === "master" ? " master" : "");
-    card.style.animationDelay = `${index * 40}ms`;
+    card.style.animationDelay = `${index * CARD_STAGGER_MS}ms`;
 
     const header = document.createElement("div");
     header.className = "card-header";
@@ -123,7 +127,7 @@ function renderStreams(state) {
 
     const urlSpan = document.createElement("div");
     urlSpan.className = "card-url";
-    urlSpan.textContent = truncateUrl(entry.url, 40);
+    urlSpan.textContent = truncateUrl(entry.url, CARD_URL_TRUNCATE_LEN);
     urlSpan.title = "Click to copy URL";
 
     MV3_UI.applyScrambleCopy(urlSpan, entry.url, (msg) => showToast(msg, "error"));
@@ -168,7 +172,7 @@ function sendUrl(url, btnEl) {
     btnEl.classList.remove("sending");
     btnEl.innerHTML = originalHtml;
     showToast("ERR: TX_TIMEOUT", "error");
-  }, 10000);
+  }, SEND_TIMEOUT_MS);
 
   chrome.runtime.sendMessage(
     { action: "sendToMpv", url },

@@ -4,6 +4,15 @@
 
 self.MV3_UI = (function() {
   const GLITCH_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+  const GLITCH_ITERATIONS = 6;
+  const GLITCH_INTERVAL_MS = 30;
+  const GLITCH_RESCHEDULE_MIN_MS = 3000;
+  const GLITCH_RESCHEDULE_RANGE_MS = 7000;
+  const GLITCH_INITIAL_MIN_MS = 2000;
+  const GLITCH_INITIAL_RANGE_MS = 3000;
+  const SCRAMBLE_INTERVAL_IN_MS = 45;
+  const SCRAMBLE_INTERVAL_OUT_MS = 25;
+  const CLIPBOARD_REVERT_MS = 1000;
 
   /**
    * Triggers a glitch effect on an element.
@@ -24,17 +33,17 @@ self.MV3_UI = (function() {
         }).join("");
         iterations++;
 
-        if (iterations > 6) {
+        if (iterations > GLITCH_ITERATIONS) {
           clearInterval(interval);
           element.textContent = finalString;
           element.classList.remove("is-glitching");
 
-          timeouts.push(setTimeout(triggerGlitch, 3000 + Math.random() * 7000));
+          timeouts.push(setTimeout(triggerGlitch, GLITCH_RESCHEDULE_MIN_MS + Math.random() * GLITCH_RESCHEDULE_RANGE_MS));
         }
-      }, 30);
+      }, GLITCH_INTERVAL_MS);
     }
 
-    timeouts.push(setTimeout(triggerGlitch, 2000 + Math.random() * 3000));
+    timeouts.push(setTimeout(triggerGlitch, GLITCH_INITIAL_MIN_MS + Math.random() * GLITCH_INITIAL_RANGE_MS));
     return timeouts;
   }
 
@@ -85,10 +94,10 @@ self.MV3_UI = (function() {
                   element.textContent = original;
                   element.classList.remove("url-glitch");
                 }
-              }, 25);
-            }, 1000);
+              }, SCRAMBLE_INTERVAL_OUT_MS);
+            }, CLIPBOARD_REVERT_MS);
           }
-        }, 45);
+        }, SCRAMBLE_INTERVAL_IN_MS);
       }).catch(() => {
         if (onError) onError("ERR: CLIPBOARD_FAIL");
       });

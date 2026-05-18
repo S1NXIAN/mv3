@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 """
-MPV Bridge — Native Messaging Host
+MPV Bridge - Native Messaging Host
 
 Protocol: Chrome Native Messaging (stdio, 4-byte LE length prefix)
 Receives JSON commands from the extension, spawns mpv as a detached process.
-
-Supported actions:
-  - "play"  → Launch mpv with the given URL and flags
-  - "ping"  → Health check, responds with status
 """
 
 import sys
@@ -24,12 +20,12 @@ import atexit
 
 COOKIE_PREFIX = 'mv3_cookies_'
 COOKIE_MAX_AGE_SECONDS = 3600
+MAX_MESSAGE_BYTES = 1024 * 1024
 
 _cookie_files = []
 
 
 def _cleanup_cookie_files():
-    """Remove temporary cookie files created during this session."""
     for filepath in _cookie_files:
         try:
             if os.path.exists(filepath):
@@ -42,7 +38,6 @@ atexit.register(_cleanup_cookie_files)
 
 
 def _cleanup_stale_cookies():
-    """Remove temporary cookie files older than COOKIE_MAX_AGE_SECONDS."""
     try:
         pattern = os.path.join(tempfile.gettempdir(), f'{COOKIE_PREFIX}*.txt')
         now = time.time()
@@ -57,7 +52,6 @@ def _cleanup_stale_cookies():
 
 
 def _escape_cookie_value(value):
-    """Escape cookie value for Netscape format (handles special characters)."""
     return value.replace('\\', '\\\\').replace(',', '\\,').replace('\t', '\\t').replace('\n', '\\n').replace('\r', '\\r')
 
 
@@ -67,7 +61,7 @@ def read_message():
         if len(raw_length) < 4:
             sys.exit(0)
         length = struct.unpack('<I', raw_length)[0]
-        if length > 1024 * 1024:
+        if length > MAX_MESSAGE_BYTES:
             sys.exit(1)
         raw_message = sys.stdin.buffer.read(length)
         return json.loads(raw_message.decode('utf-8'))
@@ -83,6 +77,56 @@ def send_message(obj):
     sys.stdout.buffer.flush()
 
 
+def _build_cookie_file(cookies):
+    valid_cookies = _filter_valid_cookies(cookies)
+    if not valid_cookies:
+        return None
+
+    try:
+        cookie_file = tempfile.NamedTemporaryFile(
+            mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
+        )
+        cookie_file.write("# Netscape HTTP Cookie File\n")
+
+        for c in valid_cookies:
+            domain = c.get('domain', '')
+            path = c.get('path', '/')
+            secure = "TRUE" if c.get('secure') else "FALSE"
+            try:
+                expires = int(c.get('expirationDate', 0) or 0)
+            except (ValueError, TypeError):
+                expires = 0
+            name = _escape_cookie_value(c.get('name', ''))
+            value = _escape_cookie_value(c.get('value', ''))
+            subdomains = "TRUE" if domain.startswith('.') else "FALSE"
+            cookie_file.write(f"{domain}\t{subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
+
+        cookie_file.close()
+        _cookie_files.append(cookie_file.name)
+        return cookie_file.name
+    except Exception as e:
+        if cookie_file and os.path.exists(cookie_file.name):
+            try:
+                os.remove(cookie_file.name)
+            except OSError:
+                pass
+        return None
+
+
+def _filter_valid_cookies(cookies):
+    if not cookies or not isinstance(cookies, list):
+        return []
+    current_time = int(time.time())
+    return [
+        c for c in cookies
+        if isinstance(c, dict) and (c.get('session', False) or c.get('expirationDate', 0) >= current_time)
+    ]
+
+
+def _validate_mpv_path(mpv_path):
+    return os.path.isfile(mpv_path) and os.access(mpv_path, os.X_OK)
+
+
 def handle_play(message):
     url = message.get('url', '')
     flags = message.get('flags', [])
@@ -94,7 +138,7 @@ def handle_play(message):
         send_message({'status': 'error', 'message': 'No URL provided'})
         return
 
-    if not os.path.isfile(mpv_path) or not os.access(mpv_path, os.X_OK):
+    if not _validate_mpv_path(mpv_path):
         send_message({'status': 'error', 'message': f'MPV not found or not executable: {mpv_path}'})
         return
 
@@ -115,44 +159,12 @@ def handle_play(message):
         socket_timeout = max(1, int(socket_timeout))
     except (ValueError, TypeError):
         socket_timeout = 30
+
     ytdl_opts = [f'socket-timeout={socket_timeout}']
 
-    cookie_file = None
-    if cookies and isinstance(cookies, list):
-        try:
-            current_time = int(time.time())
-            valid_cookies = [c for c in cookies if isinstance(c, dict) and (c.get('session', False) or c.get('expirationDate', 0) >= current_time)]
-
-            if valid_cookies:
-                cookie_file = tempfile.NamedTemporaryFile(
-                    mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
-                )
-                cookie_file.write("# Netscape HTTP Cookie File\n")
-
-                for c in valid_cookies:
-                    domain = c.get('domain', '')
-                    path = c.get('path', '/')
-                    secure = "TRUE" if c.get('secure') else "FALSE"
-                    try:
-                        expires = int(c.get('expirationDate', 0) or 0)
-                    except (ValueError, TypeError):
-                        expires = 0
-                    name = _escape_cookie_value(c.get('name', ''))
-                    value = _escape_cookie_value(c.get('value', ''))
-
-                    subdomains = "TRUE" if domain.startswith('.') else "FALSE"
-
-                    cookie_file.write(f"{domain}\t{subdomains}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
-
-                cookie_file.close()
-                _cookie_files.append(cookie_file.name)
-                ytdl_opts.append(f'cookies={cookie_file.name}')
-        except Exception as e:
-            if cookie_file and os.path.exists(cookie_file.name):
-                try:
-                    os.remove(cookie_file.name)
-                except OSError:
-                    pass
+    cookie_path = _build_cookie_file(cookies)
+    if cookie_path:
+        ytdl_opts.append(f'cookies={cookie_path}')
 
     if ytdl_opts:
         cmd.append(f"--ytdl-raw-options={','.join(ytdl_opts)}")

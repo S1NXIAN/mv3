@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MV3 - HUD</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/shared.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -32,7 +30,6 @@
       </div>
     </div>
 
-    <!-- Target Source Panel -->
     <div class="hud-panel primary-target">
       <div class="panel-deco-lines"></div>
       <div class="hud-label">
@@ -41,7 +38,7 @@
       <div class="target-readout">
         <div class="target-data">
           <span class="data-prefix">URL:</span>
-          <span id="page-url" class="data-text truncate">—</span>
+          <span id="page-url" class="data-text truncate">---</span>
         </div>
         <button id="btn-send-page" class="hud-action-btn">
           <div class="btn-scan"></div>
@@ -50,7 +47,6 @@
       </div>
     </div>
 
-    <!-- Network Stream Intercepts -->
     <div class="hud-panel intercept-grid">
       <div class="hud-label split-label">
         <span>INTERCEPT_SIG</span>
@@ -58,7 +54,6 @@
       </div>
 
       <div id="stream-list" class="data-card-container hidden">
-        <!-- Populated via JS -->
       </div>
 
       <div id="stream-warning-banner" class="marquee-container hidden">

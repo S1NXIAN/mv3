@@ -1,10 +1,3 @@
-/**
- * MV3 — H264ify Codec Shield
- *
- * "Gold Standard" implementation that monkey-patches browser media APIs
- * to block VP8, VP9, and AV1, forcing the browser to fall back to H.264 (AVC).
- */
-
 (function() {
   const BLOCKED_CODECS = [
     "vp8", "vp9", "vp09",

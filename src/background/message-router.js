@@ -1,13 +1,3 @@
-/**
- * message-router.js — Internal message router (popup ↔ SW)
- *
- * Handles chrome.runtime.onMessage for communication between
- * the popup/options pages and the service worker.
- *
- * Depends on: tab-state.js (getTabState), native-messaging.js (sendToMpv),
- *             config.js (getConfig)
- */
-
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.action === "getTabState") {
     if (typeof message.tabId !== 'number' || message.tabId < 0) {
@@ -37,5 +27,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  sendResponse({ success: false, error: `Unknown action: ${message.action}` });
   return false;
 });

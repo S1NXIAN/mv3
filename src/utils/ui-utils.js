@@ -1,7 +1,3 @@
-/**
- * ui-utils.js - Shared UI effects and helpers for MV3 Bridge
- */
-
 self.MV3_UI = (function() {
   const GLITCH_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
   const GLITCH_ITERATIONS = 6;
@@ -14,12 +10,6 @@ self.MV3_UI = (function() {
   const SCRAMBLE_INTERVAL_OUT_MS = 25;
   const CLIPBOARD_REVERT_MS = 1000;
 
-  /**
-   * Triggers a glitch effect on an element.
-   * @param {HTMLElement} element 
-   * @param {string} finalString 
-   * @returns {number[]} Array of timeout IDs
-   */
   function initRandomGlitch(element, finalString) {
     const timeouts = [];
 
@@ -47,17 +37,12 @@ self.MV3_UI = (function() {
     return timeouts;
   }
 
-  /**
-   * Applies a scramble effect and copies text to clipboard.
-   * @param {HTMLElement} element 
-   * @param {textToCopy} textToCopy 
-   * @param {Function} onError 
-   */
   function applyScrambleCopy(element, textToCopy, onError) {
     if (!textToCopy) return;
     if (element.dataset.mv3ScrambleBound) return;
     element.dataset.mv3ScrambleBound = "true";
     element.style.cursor = "pointer";
+
     const handler = () => {
       if (element.classList.contains("url-glitch")) return;
 
@@ -102,7 +87,8 @@ self.MV3_UI = (function() {
         if (onError) onError("ERR: CLIPBOARD_FAIL");
       });
     };
-    element.addEventListener("click", handler, { once: true });
+
+    element.addEventListener("click", handler);
   }
 
   return {

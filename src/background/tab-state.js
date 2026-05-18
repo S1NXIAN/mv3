@@ -1,13 +1,3 @@
-/**
- * tab-state.js — Per-tab state manager (Hybrid Cache + Local Storage)
- *
- * Fast in-memory Map backed by chrome.storage.local for persistence
- * across service worker restarts AND extension reloads.
- * Validates tabs on hydration to prune stale entries.
- *
- * Depends on: badge.js (clearBadgeTimeout, updateBadge)
- */
-
 const TAB_STORAGE_KEY = "mv3_tabStates";
 
 const stateCache = new Map();
@@ -22,7 +12,6 @@ async function hydrateCache() {
       const stored = result[TAB_STORAGE_KEY];
       if (!stored || typeof stored !== "object") return;
 
-      // Query which tabs actually still exist
       const liveTabs = await chrome.tabs.query({});
       const liveTabIds = new Set(liveTabs.map(t => t.id));
 
@@ -31,7 +20,7 @@ async function hydrateCache() {
         const tabId = parseInt(tabIdStr, 10);
         if (!liveTabIds.has(tabId)) {
           pruned = true;
-          continue; // Skip dead tabs
+          continue;
         }
         if (value && Array.isArray(value.urls) && value.urls.length > 0) {
           stateCache.set(tabId, {
@@ -39,12 +28,10 @@ async function hydrateCache() {
             hasMaster: value.hasMaster || false,
             pending: new Set(),
           });
-          // Restore badge for tabs that have streams
-          debouncedBadgeUpdate(tabId, stateCache.get(tabId));
+          debouncedBadgeUpdate(tabId);
         }
       }
 
-      // Clean up dead tab entries from storage
       if (pruned) {
         _persistDebounce();
       }
@@ -56,10 +43,7 @@ async function hydrateCache() {
   return _hydratePromise;
 }
 
-// Start hydration immediately on boot
 hydrateCache();
-
-/* ── Persistence (debounced batch write) ── */
 
 const PERSIST_DEBOUNCE_MS = 1000;
 let _persistTimer = null;
@@ -84,8 +68,6 @@ async function _persistNow() {
   }
 }
 
-/* ── Public API ── */
-
 async function getTabState(tabId) {
   await hydrateCache();
   if (!stateCache.has(tabId)) {
@@ -106,8 +88,6 @@ async function clearTabState(tabId) {
   _persistDebounce();
   updateBadge(tabId, { urls: [], hasMaster: false });
 }
-
-/* ── Tab Lifecycle ── */
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "loading" || changeInfo.url) {

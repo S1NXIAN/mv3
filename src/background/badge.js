@@ -1,10 +1,3 @@
-/**
- * badge.js — Badge icon controller with debouncing
- *
- * Manages the extension icon state (idle/active) per tab.
- * Provides debounced updates to prevent flickering during rapid stream detection.
- */
-
 const BADGE_DEBOUNCE_MS = 250;
 
 const ICON_IDLE = {
@@ -28,7 +21,7 @@ function clearBadgeTimeout(tabId) {
   }
 }
 
-function debouncedBadgeUpdate(tabId, state) {
+function debouncedBadgeUpdate(tabId) {
   clearBadgeTimeout(tabId);
   badgeUpdateTimeouts.set(tabId, setTimeout(async () => {
     badgeUpdateTimeouts.delete(tabId);

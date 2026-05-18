@@ -1,12 +1,3 @@
-/**
- * config.js — Configuration loader with TTL cache
- *
- * Provides getConfig() with in-memory caching and automatic invalidation
- * on storage changes. Also manages the H264ify content script lifecycle.
- *
- * Depends on: config-defaults.js (MV3_CONFIG_DEFAULTS)
- */
-
 const CONFIG_CACHE_TTL_MS = 5000;
 const H264IFY_SCRIPT_ID = "h264ify-shield";
 
@@ -34,7 +25,6 @@ async function getConfig(forceRefresh = false) {
   return _configPromise;
 }
 
-// Dynamic H264ify Management
 async function syncH264ify() {
   try {
     const config = await getConfig();
@@ -48,20 +38,19 @@ async function syncH264ify() {
           matches: ["<all_urls>"],
           runAt: "document_start",
           world: "MAIN",
-           allFrames: true
-         }]);
-       }
-     } else {
-       if (existing.length > 0) {
-         await chrome.scripting.unregisterContentScripts({ ids: [H264IFY_SCRIPT_ID] });
-       }
-     }
+          allFrames: true
+        }]);
+      }
+    } else {
+      if (existing.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: [H264IFY_SCRIPT_ID] });
+      }
+    }
   } catch (err) {
     console.error("[MV3 Bridge] Failed to sync H264ify:", err);
   }
 }
 
-// Invalidate config cache when settings change
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync") {
     _configCache = null;
@@ -72,5 +61,4 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// Sync on boot
 syncH264ify();

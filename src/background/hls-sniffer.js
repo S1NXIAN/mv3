@@ -1,13 +1,3 @@
-/**
- * hls-sniffer.js — HLS stream detection via webRequest
- *
- * Detects .m3u8 playlists by URL pattern and MIME type,
- * classifies them as master/media/unknown, and stores per-tab.
- *
- * Depends on: config.js (getConfig), tab-state.js (getTabState, saveTabState),
- *             badge.js (debouncedBadgeUpdate)
- */
-
 const MASTER_PLAYLIST_REGEX = /#EXT-X-STREAM-INF/;
 const MEDIA_PLAYLIST_REGEX = /#EXTINF/;
 const PLAYLIST_FETCH_TIMEOUT_MS = 10000;
@@ -123,5 +113,5 @@ async function classifyAndStore(tabId, url) {
   }
 
   await saveTabState(tabId);
-  debouncedBadgeUpdate(tabId, state);
+  debouncedBadgeUpdate(tabId);
 }

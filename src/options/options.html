@@ -4,26 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MV3 - SYS.CONFIG</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/shared.css">
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <div class="crt-overlay"></div>
   <div class="noise-bg"></div>
-  <div class="scanner-line"></div>
+  <div class="scanner-line" style="--scan-duration: 10s; --scan-end: 1200px;"></div>
 
   <div class="container">
     <div class="hud-frame-top">
       <div class="hud-brand">
-        <svg class="target-reticle" viewBox="0 0 100 100">
+        <svg class="target-reticle" viewBox="0 0 100 100" style="--spin-duration: 15s;">
           <circle cx="50" cy="50" r="40" fill="none" stroke="var(--crimson)" stroke-width="2" stroke-dasharray="10 5" />
           <path d="M 50 0 L 50 20 M 50 80 L 50 100 M 0 50 L 20 50 M 80 50 L 100 50" stroke="var(--crimson)" stroke-width="4" />
         </svg>
         <div class="brand-text">
           <div style="display: flex; align-items: baseline;">
-            <h1 class="neon-text">MV3 // BRIDGE</h1>
+            <h1 class="neon-text" style="font-size: 28px; letter-spacing: 6px;">MV3 // BRIDGE</h1>
             <span id="app-version" class="version-txt"></span>
           </div>
           <p class="subtitle">SYS.CONFIG // ADVANCED PARAMETERS</p>
@@ -32,10 +30,9 @@
     </div>
 
     <main class="grid">
-      <!-- Network & Privacy -->
-      <section class="hud-panel">
+      <section class="hud-panel" style="--panel-index: 0;">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label">
+        <div class="hud-label" style="font-size: 12px; margin-bottom: 20px; padding-left: 8px;">
           <span class="glitch-txt" data-text="NET.INT">NET.INT</span> // INTERCEPT
         </div>
         <div class="panel-content">
@@ -54,7 +51,7 @@
 
           <div class="field switch-field">
             <div class="switch-info">
-              <label>PASS_BROWSER_IDENTITY <span style="display:inline-block;padding:2px 6px;margin-left:8px;font-size:10px;font-weight:bold;background:rgba(255,165,0,0.15);border:1px solid #ff9f00;color:#ff9f00;text-transform:uppercase;letter-spacing:1px;box-shadow:0 0 8px rgba(255,159,0,0.4)">EXPERIMENTAL</span></label>
+              <label>PASS_BROWSER_IDENTITY <span class="exp-badge">EXPERIMENTAL</span></label>
               <p class="field-hint">Forward cookies to MPV. May not work for age-restricted content.</p>
             </div>
             <label class="hud-toggle">
@@ -80,15 +77,14 @@
         </div>
       </section>
 
-      <!-- System Status -->
-      <section class="hud-panel">
+      <section class="hud-panel" style="--panel-index: 1;">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label">
+        <div class="hud-label" style="font-size: 12px; margin-bottom: 20px; padding-left: 8px;">
           <span class="glitch-txt" data-text="SYS.STAT">SYS.STAT</span> // DIAGNOSTICS
         </div>
         <div class="panel-content">
-          <button id="btn-test-host" class="hud-action-btn primary w-full">
-            <div class="btn-scan"></div>
+          <button id="btn-test-host" class="hud-action-btn primary w-full" style="padding: 12px 24px; font-size: 13px;">
+            <div class="btn-scan" style="width: 10px; filter: blur(4px);"></div>
             [ PING NATIVE HOST ]
           </button>
           <div id="test-result" class="vfd-status mt-2"></div>
@@ -108,10 +104,9 @@
         </div>
       </section>
 
-      <!-- System Core (Advanced) -->
-      <section class="hud-panel advanced-panel">
+      <section class="hud-panel advanced-panel" style="--panel-index: 2;">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label">
+        <div class="hud-label" style="font-size: 12px; margin-bottom: 20px; padding-left: 8px;">
           <span class="glitch-txt" data-text="CORE.CFG">CORE.CFG</span> // KERNEL
         </div>
         <div class="panel-content">
@@ -129,10 +124,9 @@
         </div>
       </section>
 
-      <!-- Video Rendering -->
-      <section class="hud-panel advanced-panel">
+      <section class="hud-panel advanced-panel" style="--panel-index: 3;">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label">
+        <div class="hud-label" style="font-size: 12px; margin-bottom: 20px; padding-left: 8px;">
           <span class="glitch-txt" data-text="VID.RNDR">VID.RNDR</span> // OUTPUT
         </div>
         <div class="panel-content">
@@ -174,10 +168,9 @@
         </div>
       </section>
 
-      <!-- Advanced Flags -->
       <section class="hud-panel grid-span-full advanced-panel">
         <div class="panel-deco-lines"></div>
-        <div class="hud-label" style="display: flex; justify-content: space-between; align-items: flex-end; border-left: none; padding-left: 0; margin-bottom: 24px;">
+        <div class="hud-label" style="display: flex; justify-content: space-between; align-items: flex-end; border-left: none; padding-left: 0; margin-bottom: 24px; font-size: 12px;">
           <div style="border-left: 2px solid var(--crimson); padding-left: 8px;">
             <span class="glitch-txt" data-text="SYS.FLAGS">SYS.FLAGS</span> // RAW PARAMS
           </div>
@@ -209,11 +202,11 @@
     </main>
 
     <footer class="footer">
-      <button id="btn-reset" class="hud-action-btn danger">
+      <button id="btn-reset" class="hud-action-btn danger" style="padding: 12px 24px; font-size: 13px;">
         <div class="btn-scan"></div>
         [ FACTORY RESET ]
       </button>
-      <button id="btn-save" class="hud-action-btn primary">
+      <button id="btn-save" class="hud-action-btn primary" style="padding: 12px 24px; font-size: 13px;">
         <div class="btn-scan"></div>
         [ COMMIT CHANGES ]
       </button>

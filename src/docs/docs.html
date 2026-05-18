@@ -4,18 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MV3 - SYSTEM PARAMETERS</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/shared.css">
   <link rel="stylesheet" href="docs.css">
 </head>
 <body>
 
   <div class="crt-overlay"></div>
   <div class="noise-bg"></div>
-  <div class="scanner-line"></div>
+  <div class="scanner-line" style="--scan-duration: 10s; --scan-end: 1200px;"></div>
 
-  <button class="btn-close" title="Close Documentation">×</button>
+  <button class="btn-close" title="Close Documentation">x</button>
 
   <div class="layout-grid">
     <aside class="sidebar">
@@ -32,11 +30,10 @@
     </aside>
 
     <main class="content">
-      
-      <!-- Section 1 -->
+
       <h2 class="section-title">MPV.CORE // CLI Overrides</h2>
       <div class="spec-grid">
-        
+
         <div class="spec-row" style="--delay: 0.1s">
           <div class="spec-num">01</div>
           <div class="spec-details">
@@ -59,7 +56,7 @@
           <div class="spec-num">03</div>
           <div class="spec-details">
             <div class="spec-name">Dynamic Autofit</div>
-            <div class="spec-desc">Constrains the initial window size to a percentage of the screen dimensions while maintaining aspect ratio. Prevents massive video resolutions from overflowing the screen.</div>
+            <div class="spec-desc">Constrains the initial window size to a percentage of the screen dimensions while maintaining aspect ratio.</div>
             <div class="spec-cmd flag-example" title="Click to copy">--autofit=50%</div>
           </div>
         </div>
@@ -68,7 +65,7 @@
           <div class="spec-num">04</div>
           <div class="spec-details">
             <div class="spec-name">Save Position on Quit</div>
-            <div class="spec-desc">Automatically commits playback state and timestamp to disk upon termination. Resumes seamlessly from the exact position on next execution.</div>
+            <div class="spec-desc">Automatically commits playback state and timestamp to disk upon termination.</div>
             <div class="spec-cmd flag-example" title="Click to copy">--save-position-on-quit</div>
           </div>
         </div>
@@ -84,7 +81,6 @@
 
       </div>
 
-      <!-- Section 2 -->
       <h2 class="section-title">YT.EXTRACT // Stream Directives</h2>
       <div class="spec-grid">
 
@@ -92,7 +88,7 @@
           <div class="spec-num">06</div>
           <div class="spec-details">
             <div class="spec-name">Mark Watched</div>
-            <div class="spec-desc">Forces YouTube to update your account history and mark the stream as "watched". Requires browser identity forwarding (cookies) to be active. Place this in the CUSTOM_CLI_FLAGS box.</div>
+            <div class="spec-desc">Forces YouTube to update your account history and mark the stream as "watched". Requires browser identity forwarding (cookies).</div>
             <div class="spec-cmd flag-example" title="Click to copy">--ytdl-raw-options="mark-watched="</div>
           </div>
         </div>
@@ -101,7 +97,7 @@
           <div class="spec-num">07</div>
           <div class="spec-details">
             <div class="spec-name">1080p Resolution Cap</div>
-            <div class="spec-desc">Throttles the stream negotiator to a maximum of 1080p for optimized buffering. Place this in the YTDL_FORMAT box.</div>
+            <div class="spec-desc">Throttles the stream negotiator to a maximum of 1080p.</div>
             <div class="spec-cmd flag-example" title="Click to copy">bestvideo[height&lt;=1080]+bestaudio/best</div>
           </div>
         </div>
@@ -110,7 +106,7 @@
           <div class="spec-num">08</div>
           <div class="spec-details">
             <div class="spec-name">720p Bandwidth Saver</div>
-            <div class="spec-desc">Aggressive throttle for constrained network environments. Limits stream to 720p. Place this in the YTDL_FORMAT box.</div>
+            <div class="spec-desc">Aggressive throttle for constrained network environments.</div>
             <div class="spec-cmd flag-example" title="Click to copy">bestvideo[height&lt;=720]+bestaudio/best</div>
           </div>
         </div>
@@ -119,7 +115,7 @@
           <div class="spec-num">09</div>
           <div class="spec-details">
             <div class="spec-name">Nullify Video Render</div>
-            <div class="spec-desc">Extracts and streams only the audio track. Ideal for podcast streams and music. Place this in the YTDL_FORMAT box.</div>
+            <div class="spec-desc">Extracts and streams only the audio track.</div>
             <div class="spec-cmd flag-example" title="Click to copy">bestaudio/best</div>
           </div>
         </div>

@@ -73,20 +73,16 @@ The system consists of two components: the browser extension and a native messag
 
 ```bash
 cd native_host
-chmod +x installer.py
-./installer.py
+chmod +x installer.sh
+./installer.sh
 ```
 
 Follow the interactive prompts to select your browser and paste the Extension ID.
 
-### 3. Verify Connection
-
-Open the extension popup, navigate to **Options**, and click **[ PING NATIVE HOST ]**. A successful connection shows `✓ CONNECTED`.
-
-> [!NOTE]
+> [!TIP]
 > To uninstall later:
 > ```bash
-> ./installer.py --uninstall
+> ./installer.sh --uninstall
 > ```
 
 ## Configuration

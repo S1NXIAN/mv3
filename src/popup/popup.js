@@ -1,20 +1,16 @@
-/**
- * popup.js — MPV Bridge Popup Controller
- *
- * Queries the service worker for per-tab state,
- * renders detected m3u8 URLs, and dispatches "send to MPV" commands.
- */
-
 const TOAST_DISPLAY_MS = 2200;
 const SEND_TIMEOUT_MS = 10000;
 const CARD_STAGGER_MS = 40;
-const PAGE_URL_TRUNCATE_LEN = 48;
-const CARD_URL_TRUNCATE_LEN = 40;
 const STREAM_TYPE_ORDER = { master: 0, media: 1, unknown: 2 };
 
 document.addEventListener("DOMContentLoaded", init);
 
 let _glitchTimeouts = [];
+
+function cleanup() {
+  _glitchTimeouts.forEach(clearTimeout);
+  _glitchTimeouts = [];
+}
 
 async function init() {
   const btnOptions = document.getElementById("btn-options");
@@ -27,17 +23,20 @@ async function init() {
     _glitchTimeouts.push(...MV3_UI.initRandomGlitch(bridgeEl, "BRIDGE"));
   }
 
+  window.addEventListener("unload", cleanup);
+  window.addEventListener("beforeunload", cleanup);
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const pageUrlEl = document.getElementById("page-url");
   if (!tab || !tab.url || !tab.url.startsWith('http')) {
     if (pageUrlEl) {
-      pageUrlEl.textContent = "—";
+      pageUrlEl.textContent = "---";
       pageUrlEl.title = "No valid page";
     }
     return;
   }
 
-  const displayUrl = truncateUrl(tab.url, PAGE_URL_TRUNCATE_LEN);
+  const displayUrl = truncateUrl(tab.url, 48);
   if (pageUrlEl) {
     pageUrlEl.textContent = displayUrl;
     pageUrlEl.title = tab.url;
@@ -71,8 +70,6 @@ async function init() {
   });
 }
 
-/* ── Render stream list ── */
-
 function renderStreams(state) {
   if (!state || !Array.isArray(state.urls)) {
     state = { urls: [], hasMaster: false };
@@ -83,9 +80,6 @@ function renderStreams(state) {
   const countEl = document.getElementById("stream-count");
 
   countEl.textContent = state.urls.length;
-
-  // We keep the page panel always visible as a reliable fallback for yt-dlp,
-  // even if HLS streams are detected, just in case they are false positives (like video thumbnails).
 
   const warningBanner = document.getElementById("stream-warning-banner");
 
@@ -101,10 +95,8 @@ function renderStreams(state) {
   listEl.style.display = "flex";
   if (warningBanner) warningBanner.classList.remove("hidden");
 
-  // Clear previous list
   listEl.replaceChildren();
 
-  // Sort: masters first, then media, then unknown
   const sorted = [...state.urls].sort(
     (a, b) => (STREAM_TYPE_ORDER[a.type] ?? 3) - (STREAM_TYPE_ORDER[b.type] ?? 3)
   );
@@ -127,7 +119,7 @@ function renderStreams(state) {
 
     const urlSpan = document.createElement("div");
     urlSpan.className = "card-url";
-    urlSpan.textContent = truncateUrl(entry.url, CARD_URL_TRUNCATE_LEN);
+    urlSpan.textContent = truncateUrl(entry.url, 40);
     urlSpan.title = "Click to copy URL";
 
     MV3_UI.applyScrambleCopy(urlSpan, entry.url, (msg) => showToast(msg, "error"));
@@ -153,8 +145,6 @@ function renderStreams(state) {
     listEl.appendChild(card);
   });
 }
-
-/* ── Send to MPV via SW ── */
 
 function sendUrl(url, btnEl) {
   if (!url || btnEl.classList.contains("sending")) return;
@@ -196,8 +186,6 @@ function sendUrl(url, btnEl) {
   );
 }
 
-/* ── Toast notifications ── */
-
 function showToast(message, type) {
   const container = document.getElementById("toast-container");
   if (!container) return;
@@ -213,20 +201,15 @@ function showToast(message, type) {
   }, TOAST_DISPLAY_MS);
 }
 
-/* ── Helpers ── */
-
 function truncateUrl(url, maxLen) {
-  if (!url) return "—";
+  if (!url) return "---";
   try {
     const u = new URL(url);
     const pathParts = u.pathname.split("/").filter(Boolean);
     const last = pathParts[pathParts.length - 1] || "";
-    // If the filename itself is massive, truncate its middle
-    const shortLast = last.length > 25 ? last.substring(0, 12) + "…" + last.substring(last.length - 10) : last;
-    return u.hostname + "/…/" + shortLast;
+    const shortLast = last.length > 25 ? last.substring(0, 12) + "\u2026" + last.substring(last.length - 10) : last;
+    return u.hostname + "/\u2026/" + shortLast;
   } catch {
-    return url.length > maxLen ? url.slice(0, maxLen) + "…" : url;
+    return url.length > maxLen ? url.slice(0, maxLen) + "\u2026" : url;
   }
 }
-
-

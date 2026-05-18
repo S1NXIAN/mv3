@@ -122,6 +122,70 @@
 
       </div>
 
+      <h2 class="section-title">MPV.ADV // Advanced Rendering</h2>
+      <div class="spec-grid">
+
+        <div class="spec-row" style="--delay: 1.0s">
+          <div class="spec-num">10</div>
+          <div class="spec-details">
+            <div class="spec-name">Hardware Acceleration (VAAPI)</div>
+            <div class="spec-desc">Forces VAAPI hardware decoding. Essential for Linux systems with Intel/AMD GPUs.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--hwdec=vaapi</div>
+          </div>
+        </div>
+
+        <div class="spec-row" style="--delay: 1.1s">
+          <div class="spec-num">11</div>
+          <div class="spec-details">
+            <div class="spec-name">Streaming Cache</div>
+            <div class="spec-desc">Enables aggressive caching for high-bitrate streams to prevent buffering.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--cache=yes</div>
+          </div>
+        </div>
+
+        <div class="spec-row" style="--delay: 1.2s">
+          <div class="spec-num">12</div>
+          <div class="spec-details">
+            <div class="spec-name">Subtitle Auto-load</div>
+            <div class="spec-desc">Automatically loads external subtitle files that match the video filename.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--sub-auto=fuzzy</div>
+          </div>
+        </div>
+
+      </div>
+
+      <h2 class="section-title">YT.TROUBLE // Troubleshooting</h2>
+      <div class="spec-grid">
+
+        <div class="spec-row" style="--delay: 1.3s">
+          <div class="spec-num">13</div>
+          <div class="spec-details">
+            <div class="spec-name">Native Host Not Found</div>
+            <div class="spec-desc">Ensure the native host manifest is in the correct browser config directory and the extension ID matches.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">./installer.sh</div>
+          </div>
+        </div>
+
+        <div class="spec-row" style="--delay: 1.4s">
+          <div class="spec-num">14</div>
+          <div class="spec-details">
+            <div class="spec-name">Cookies Not Passing</div>
+            <div class="spec-desc">Ensure "Pass Identity" is enabled in Options. Note: Chromium-based browsers may block cookie access for security.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--pass-identity=true</div>
+          </div>
+        </div>
+
+        <div class="spec-row" style="--delay: 1.5s">
+          <div class="spec-num">15</div>
+          <div class="spec-details">
+            <div class="spec-name">Stream Not Detected</div>
+            <div class="spec-desc">Check if the HLS sniffer is enabled. Some sites use non-standard manifest delivery.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--snifferEnabled=true</div>
+          </div>
+        </div>
+
+      </div>
+
     </main>
   </div>
 

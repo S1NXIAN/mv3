@@ -31,7 +31,8 @@
 
     <main class="content">
 
-      <h2 class="section-title">MPV.CORE // CLI Overrides</h2>
+      <h2 class="section-title">MPV.CORE // General CLI Flags</h2>
+      <p class="subtitle" style="margin-bottom: 30px;">Paste these into the <strong>CUSTOM_CLI_FLAGS</strong> box.</p>
       <div class="spec-grid">
 
         <div class="spec-row" style="--delay: 0.1s">
@@ -56,7 +57,7 @@
           <div class="spec-num">03</div>
           <div class="spec-details">
             <div class="spec-name">Dynamic Autofit</div>
-            <div class="spec-desc">Constrains the initial window size to a percentage of the screen dimensions while maintaining aspect ratio.</div>
+            <div class="spec-desc">Constrains the initial window size to a percentage of the screen dimensions.</div>
             <div class="spec-cmd flag-example" title="Click to copy">--autofit=50%</div>
           </div>
         </div>
@@ -81,20 +82,12 @@
 
       </div>
 
-      <h2 class="section-title">YT.EXTRACT // Stream Directives</h2>
+      <h2 class="section-title">YT.FORMAT // Stream Format Strings</h2>
+      <p class="subtitle" style="margin-bottom: 30px;">Paste these into the <strong>YTDL_FORMAT</strong> box.</p>
       <div class="spec-grid">
 
         <div class="spec-row" style="--delay: 0.6s">
           <div class="spec-num">06</div>
-          <div class="spec-details">
-            <div class="spec-name">Mark Watched</div>
-            <div class="spec-desc">Forces YouTube to update your account history and mark the stream as "watched". Requires browser identity forwarding (cookies).</div>
-            <div class="spec-cmd flag-example" title="Click to copy">--ytdl-raw-options="mark-watched="</div>
-          </div>
-        </div>
-
-        <div class="spec-row" style="--delay: 0.7s">
-          <div class="spec-num">07</div>
           <div class="spec-details">
             <div class="spec-name">1080p Resolution Cap</div>
             <div class="spec-desc">Throttles the stream negotiator to a maximum of 1080p.</div>
@@ -102,8 +95,8 @@
           </div>
         </div>
 
-        <div class="spec-row" style="--delay: 0.8s">
-          <div class="spec-num">08</div>
+        <div class="spec-row" style="--delay: 0.7s">
+          <div class="spec-num">07</div>
           <div class="spec-details">
             <div class="spec-name">720p Bandwidth Saver</div>
             <div class="spec-desc">Aggressive throttle for constrained network environments.</div>
@@ -111,8 +104,8 @@
           </div>
         </div>
 
-        <div class="spec-row" style="--delay: 0.9s">
-          <div class="spec-num">09</div>
+        <div class="spec-row" style="--delay: 0.8s">
+          <div class="spec-num">08</div>
           <div class="spec-details">
             <div class="spec-name">Nullify Video Render</div>
             <div class="spec-desc">Extracts and streams only the audio track.</div>
@@ -122,8 +115,18 @@
 
       </div>
 
-      <h2 class="section-title">MPV.ADV // Advanced Rendering</h2>
+      <h2 class="section-title">YT.ADV // Advanced Directives</h2>
+      <p class="subtitle" style="margin-bottom: 30px;">Paste these into the <strong>CUSTOM_CLI_FLAGS</strong> box.</p>
       <div class="spec-grid">
+
+        <div class="spec-row" style="--delay: 0.9s">
+          <div class="spec-num">09</div>
+          <div class="spec-details">
+            <div class="spec-name">Mark Watched</div>
+            <div class="spec-desc">Forces YouTube to update your account history. Requires "Pass Identity" enabled.</div>
+            <div class="spec-cmd flag-example" title="Click to copy">--ytdl-raw-options="mark-watched="</div>
+          </div>
+        </div>
 
         <div class="spec-row" style="--delay: 1.0s">
           <div class="spec-num">10</div>

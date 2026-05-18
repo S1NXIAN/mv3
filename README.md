@@ -7,35 +7,51 @@
 
   [![Manifest V3](https://img.shields.io/badge/Manifest-V3-3c873a?style=flat-square)](#)
   [![Platform](https://img.shields.io/badge/Platform-Linux-cc3333?style=flat-square)](#)
-  [![Version](https://img.shields.io/badge/Version-2.4.0-00e5ff?style=flat-square)](#)
+  [![Version](https://img.shields.io/badge/Version-3.0.0-00e5ff?style=flat-square)](#)
+  [![Browsers](https://img.shields.io/badge/Browsers-14+-478ce1?style=flat-square)](#)
 
-  [Features](#features) · [Installation](#installation) · [Architecture](#architecture)
-
+  [Features](#features) · [Prerequisites](#prerequisites) · [Installation](#installation) · [Configuration](#configuration) · [Architecture](#architecture)
 </div>
 
 ---
 
-MV3 Bridge is a lightweight, high-performance browser extension that intercepts HLS video streams (`.m3u8`) and web videos, routing them directly to your local [mpv](https://mpv.io/) player via Native Messaging. It features a cyberpunk-inspired, brutalist Terminal HUD.
+MV3 Bridge is a lightweight, pure Manifest V3 browser extension that intercepts HLS video streams (`.m3u8`) and web videos, routing them directly to your local [mpv](https://mpv.io/) player via Native Messaging. 
+
+Designed for performance and security, the project features a zero-build-system architecture and a robust, Bash-based installation process.
 
 ## Features
 
-- **Zero-Dependency Architecture**: No build systems, no npm, no node_modules. Just pure, clean JavaScript and Python.
-- **Real-Time HLS Interception**: Sniffs manifests and dispatches streams via Native Messaging.
-- **Codec Enforcement (h264ify)**: Forces H.264 fallback for reduced CPU usage.
-- **Terminal Editorial UI**: Cyberpunk HUD with documentation and copy-paste CLI snippets.
+- **Performance & Security**
+  - **Dispatch Locking**: Prevents race conditions during rapid stream requests.
+  - **LRU Cache**: Efficient HLS stream detection and management.
+  - **Cookie Security**: Secure handling of browser cookie files for authenticated playback.
+- **Real-Time HLS Interception**
+  - Sniffs `.m3u8` manifests using the `webRequest` API.
+  - Displays detected streams in the popup HUD.
+- **Terminal Editorial UI**
+  - Cyberpunk-inspired brutalist configuration HUD.
+  - Built-in documentation panel with copy-paste CLI snippets.
+
+## Prerequisites
+
+| Requirement | Purpose |
+|-------------|---------|
+| Linux | Native messaging host uses Linux-specific paths |
+| Python 3 | Powers the native messaging intermediary |
+| [mpv](https://mpv.io/) | Target media player |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Video extraction backend |
 
 ## Installation
 
-### 1. Load the Extension
-1. Open `chrome://extensions` in your browser.
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select the repository root directory.
+The system consists of the browser extension and a native messaging host.
 
-> [!TIP]
-> Copy the 32-character Extension ID from the extension card—you will need it for the next step.
+### 1. Load the Extension
+1. Open `chrome://extensions` (or equivalent) in your browser.
+2. Enable **Developer mode**.
+3. Click **Load unpacked** and select the repository root.
 
 ### 2. Register the Native Host
-Open your terminal in the repository directory and run:
+Run the modernized Bash installer:
 
 ```bash
 cd native_host
@@ -43,40 +59,33 @@ chmod +x installer.sh
 ./installer.sh
 ```
 
-Follow the prompts to select your browser(s) and paste the Extension ID.
-
-> [!NOTE]
-> To uninstall later:
-> ```bash
-> ./installer.sh --uninstall
-> ```
-
-### 3. Verify Connection
-Open the extension popup, navigate to **Options**, and click **[ PING NATIVE HOST ]**. A successful connection shows `✓ CONNECTED`.
+The script automatically detects your browser environment and configures the native messaging host.
 
 ## Architecture
 
-The project is designed for simplicity, security, and performance:
-
-- `src/`: Pure JS/CSS/HTML with no compilation step.
-- `native_host/`: Python-based secure bridge between the browser and `mpv`.
-- `dist/`: No longer used; source files are loaded directly by the browser.
-
 ```
 mv3/
+├── manifest.json                 # Extension manifest
 ├── src/
-│   ├── background/    # Service worker orchestration
-│   ├── popup/         # HUD UI
-│   ├── options/       # Configuration terminal
-│   ├── styles/        # Shared atmospheric CSS
-│   └── ...
+│   ├── background/               # Service worker & logic
+│   ├── popup/                    # Stream interceptor HUD
+│   ├── options/                  # Configuration terminal
+│   └── utils/                    # Shared utilities
 ├── native_host/
-│   ├── mpv_bridge.py  # Native host implementation
-│   └── installer.sh   # Bash-based installation utility
-└── manifest.json
+│   ├── install.sh                # Bash installer
+│   └── mpv_bridge.py            # Native messaging host
+└── icons/                        # State icons
 ```
 
-## Security & Performance
-- **Minimalist**: No heavy libraries; the extension is optimized for low memory footprint.
-- **Security-First**: Native host temporary cookie files are created with strict `0600` permissions.
-- **Stable**: All state transitions are locked to prevent concurrent process spawns.
+### Data Flow
+```
+[Browser Tab] → HLS Sniffer (LRU Cache) → Service Worker
+                                            ↓
+[Popup HUD] ← Message Router ← Dispatch Locking
+      ↓
+"Send to MPV" → Native Messaging → mpv_bridge.py → mpv
+                  (stdio JSON)    (cookie security)
+```
+
+---
+*Built for the Terminal Editorial.*

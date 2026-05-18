@@ -1,6 +1,9 @@
 const MASTER_PLAYLIST_REGEX = /#EXT-X-STREAM-INF/;
 const MEDIA_PLAYLIST_REGEX = /#EXTINF/;
 const PLAYLIST_FETCH_TIMEOUT_MS = 10000;
+const PLAYLIST_CACHE_TTL_MS = 60000;
+
+const playlistCache = new Map();
 
 const HLS_MIME_TYPES = [
   "application/x-mpegurl",
@@ -77,17 +80,30 @@ async function handleMimeBasedDetection(details) {
 }
 
 async function detectPlaylistType(url) {
+  const cached = playlistCache.get(url);
+  if (cached && (Date.now() - cached.timestamp) < PLAYLIST_CACHE_TTL_MS) {
+    return cached.type;
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), PLAYLIST_FETCH_TIMEOUT_MS);
     const response = await fetch(url, { credentials: "include", signal: controller.signal });
     clearTimeout(timeoutId);
-    if (!response.ok) return "unknown";
+    if (!response.ok) {
+      playlistCache.set(url, { type: "unknown", timestamp: Date.now() });
+      return "unknown";
+    }
     const text = await response.text();
-    if (MASTER_PLAYLIST_REGEX.test(text)) return "master";
-    if (MEDIA_PLAYLIST_REGEX.test(text)) return "media";
-  } catch (_) {}
-  return "unknown";
+    let type = "unknown";
+    if (MASTER_PLAYLIST_REGEX.test(text)) type = "master";
+    else if (MEDIA_PLAYLIST_REGEX.test(text)) type = "media";
+    
+    playlistCache.set(url, { type, timestamp: Date.now() });
+    return type;
+  } catch (_) {
+    return "unknown";
+  }
 }
 
 async function classifyAndStore(tabId, url) {

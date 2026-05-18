@@ -86,6 +86,7 @@ def _build_cookie_file(cookies):
         cookie_file = tempfile.NamedTemporaryFile(
             mode='w', suffix='.txt', prefix=COOKIE_PREFIX, delete=False
         )
+        os.chmod(cookie_file.name, 0o600)
         cookie_file.write("# Netscape HTTP Cookie File\n")
 
         for c in valid_cookies:

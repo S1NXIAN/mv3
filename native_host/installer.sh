@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
 HOST_NAME="com.mpvbridge.native"
 HOST_SCRIPT="$(cd "$(dirname "$0")" && pwd)/mpv_bridge.py"

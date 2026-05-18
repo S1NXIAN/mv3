@@ -5,6 +5,7 @@ const ADVANCED_FADE_MS = 300;
 
 const _glitchTimeouts = [];
 let _isSaving = false;
+let _configCache = null;
 
 document.addEventListener("DOMContentLoaded", loadSettings);
 
@@ -17,7 +18,10 @@ window.addEventListener("beforeunload", cleanup);
 
 async function loadSettings() {
   try {
-    const config = await chrome.storage.sync.get(DEFAULTS);
+    if (!_configCache) {
+      _configCache = await chrome.storage.sync.get(DEFAULTS);
+    }
+    const config = _configCache;
 
     const manifest = chrome.runtime.getManifest();
     const versionEl = document.getElementById("app-version");
@@ -131,6 +135,50 @@ async function saveSettings(btnSave) {
   }
 
   try {
+    const newConfig = {
+      mpvPath: document.getElementById("input-mpv-path").value.trim(),
+      hostName: document.getElementById("input-host-name").value.trim(),
+      snifferEnabled: document.getElementById("toggle-sniffer")?.checked ?? true,
+      passIdentity: document.getElementById("toggle-pass-identity")?.checked ?? true,
+      forceH264: document.getElementById("toggle-force-h264")?.checked ?? false,
+      hwDec: document.getElementById("input-hwdec")?.value ?? "",
+      vo: document.getElementById("input-vo")?.value ?? "",
+      alwaysOnTop: document.getElementById("toggle-ontop")?.checked ?? false,
+      ytdlFormat: document.getElementById("input-ytdl-format").value.trim(),
+      socketTimeout: parseInt(document.getElementById("input-socket-timeout")?.value, 10) || 30,
+      defaultFlags: document.getElementById("input-default-flags").value
+        .split("\n")
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0 && f.startsWith("-")),
+      advancedMode: document.getElementById("toggle-advanced")?.checked ?? false,
+    };
+
+    if (!newConfig.mpvPath.startsWith("/")) {
+      flashToast("ERR: Absolute path required.");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9._-]+$/.test(newConfig.hostName)) {
+      flashToast("ERR: Invalid host name format.");
+      return;
+    }
+
+    await chrome.storage.sync.set(newConfig);
+    _configCache = newConfig; // Update cache
+    flashToast("SYSTEM UPDATED");
+  } catch (err) {
+    console.error("[MV3 Bridge] Failed to save:", err);
+    flashToast("ERR: SAVE_FAILURE");
+  } finally {
+    _isSaving = false;
+    if (btnSave) {
+      btnSave.innerHTML = '<div class="btn-scan"></div>[ COMMIT CHANGES ]';
+      btnSave.disabled = false;
+    }
+  }
+}
+
+  try {
     const mpvPath = document.getElementById("input-mpv-path").value.trim();
     const hostName = document.getElementById("input-host-name").value.trim();
 
@@ -184,6 +232,7 @@ async function resetSettings() {
 
   try {
     await chrome.storage.sync.set(DEFAULTS);
+    _configCache = DEFAULTS; // Reset cache
     loadSettings();
     flashToast("FACTORY RESET");
   } catch (err) {

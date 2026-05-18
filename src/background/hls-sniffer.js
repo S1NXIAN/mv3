@@ -2,8 +2,17 @@ const MASTER_PLAYLIST_REGEX = /#EXT-X-STREAM-INF/;
 const MEDIA_PLAYLIST_REGEX = /#EXTINF/;
 const PLAYLIST_FETCH_TIMEOUT_MS = 10000;
 const PLAYLIST_CACHE_TTL_MS = 60000;
+const MAX_CACHE_SIZE = 100;
 
 const playlistCache = new Map();
+
+function addToCache(url, data) {
+  if (playlistCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = playlistCache.keys().next().value;
+    playlistCache.delete(firstKey);
+  }
+  playlistCache.set(url, data);
+}
 
 const HLS_MIME_TYPES = [
   "application/x-mpegurl",
@@ -91,7 +100,7 @@ async function detectPlaylistType(url) {
     const response = await fetch(url, { credentials: "include", signal: controller.signal });
     clearTimeout(timeoutId);
     if (!response.ok) {
-      playlistCache.set(url, { type: "unknown", timestamp: Date.now() });
+      addToCache(url, { type: "unknown", timestamp: Date.now() });
       return "unknown";
     }
     const text = await response.text();
@@ -99,7 +108,7 @@ async function detectPlaylistType(url) {
     if (MASTER_PLAYLIST_REGEX.test(text)) type = "master";
     else if (MEDIA_PLAYLIST_REGEX.test(text)) type = "media";
     
-    playlistCache.set(url, { type, timestamp: Date.now() });
+    addToCache(url, { type, timestamp: Date.now() });
     return type;
   } catch (_) {
     return "unknown";

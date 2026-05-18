@@ -102,7 +102,7 @@ function bindAdvancedToggle() {
     const isChecked = e.target.checked;
     advPanels.forEach((el) => {
       if (isChecked) {
-        el.style.display = "block";
+        el.style.display = ""; // Clears inline style, reverts to grid default
         el.classList.remove("glitch-out");
         el.classList.add("glitch-in");
       } else {
@@ -165,54 +165,6 @@ async function saveSettings(btnSave) {
 
     await chrome.storage.sync.set(newConfig);
     _configCache = newConfig; // Update cache
-    flashToast("SYSTEM UPDATED");
-  } catch (err) {
-    console.error("[MV3 Bridge] Failed to save:", err);
-    flashToast("ERR: SAVE_FAILURE");
-  } finally {
-    _isSaving = false;
-    if (btnSave) {
-      btnSave.innerHTML = '<div class="btn-scan"></div>[ COMMIT CHANGES ]';
-      btnSave.disabled = false;
-    }
-  }
-}
-
-  try {
-    const mpvPath = document.getElementById("input-mpv-path").value.trim();
-    const hostName = document.getElementById("input-host-name").value.trim();
-
-    if (!mpvPath.startsWith("/")) {
-      flashToast("ERR: Absolute path required.");
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9._-]+$/.test(hostName)) {
-      flashToast("ERR: Invalid host name format.");
-      return;
-    }
-
-    const flagsRaw = document.getElementById("input-default-flags").value;
-    const defaultFlags = flagsRaw
-      .split("\n")
-      .map((f) => f.trim())
-      .filter((f) => f.length > 0 && f.startsWith("-"));
-
-    await chrome.storage.sync.set({
-      mpvPath,
-      hostName,
-      snifferEnabled: document.getElementById("toggle-sniffer")?.checked ?? true,
-      passIdentity: document.getElementById("toggle-pass-identity")?.checked ?? true,
-      forceH264: document.getElementById("toggle-force-h264")?.checked ?? false,
-      hwDec: document.getElementById("input-hwdec")?.value ?? "",
-      vo: document.getElementById("input-vo")?.value ?? "",
-      alwaysOnTop: document.getElementById("toggle-ontop")?.checked ?? false,
-      ytdlFormat: document.getElementById("input-ytdl-format").value.trim(),
-      socketTimeout: parseInt(document.getElementById("input-socket-timeout")?.value, 10) || 30,
-      defaultFlags,
-      advancedMode: document.getElementById("toggle-advanced")?.checked ?? false,
-    });
-
     flashToast("SYSTEM UPDATED");
   } catch (err) {
     console.error("[MV3 Bridge] Failed to save:", err);

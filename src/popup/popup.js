@@ -48,9 +48,14 @@ async function init() {
     sendUrl(tab.url, btnSendPage);
   });
 
+  const stateTimeout = setTimeout(() => {
+    renderStreams({ urls: [], hasMaster: false });
+  }, SEND_TIMEOUT_MS);
+
   chrome.runtime.sendMessage(
     { action: "getTabState", tabId: tab.id },
     (state) => {
+      clearTimeout(stateTimeout);
       if (chrome.runtime.lastError) {
         console.error("[MV3 Bridge] Failed to get tab state:", chrome.runtime.lastError);
         renderStreams({ urls: [], hasMaster: false });
@@ -197,7 +202,12 @@ function showToast(message, type) {
 
   setTimeout(() => {
     toast.classList.add("toast-out");
-    toast.addEventListener("animationend", () => toast.remove());
+    // Fallback for prefers-reduced-motion where animationend may not fire
+    const safetyTimer = setTimeout(() => toast.remove(), 500);
+    toast.addEventListener("animationend", () => {
+      clearTimeout(safetyTimer);
+      toast.remove();
+    }, { once: true });
   }, TOAST_DISPLAY_MS);
 }
 

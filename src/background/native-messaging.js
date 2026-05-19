@@ -1,6 +1,9 @@
 const CONTEXT_MENU_ID = "send-to-mpv";
 const ICON_FLASH_DURATION_MS = 1500;
+const NATIVE_MSG_TIMEOUT_MS = 30000;
+const MAX_CONCURRENT_DISPATCHES = 10;
 const dispatchingTabs = new Set();
+let activeDispatches = 0;
 
 async function getCookiesForUrl(url) {
   try {
@@ -42,7 +45,11 @@ function buildMpvFlags(config, extraFlags) {
 
 async function sendToMpv(url, extraFlags = [], referer = null, tabId = null) {
   if (tabId && dispatchingTabs.has(tabId)) return { success: false, error: "Dispatch already in progress" };
+  if (activeDispatches >= MAX_CONCURRENT_DISPATCHES) {
+    return { success: false, error: "Too many concurrent dispatches" };
+  }
   if (tabId) dispatchingTabs.add(tabId);
+  activeDispatches++;
   
   try {
     const config = await getConfig();
@@ -61,10 +68,15 @@ async function sendToMpv(url, extraFlags = [], referer = null, tabId = null) {
     }
 
     return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => {
+        resolve({ success: false, error: "NATIVE_HOST_TIMEOUT" });
+      }, NATIVE_MSG_TIMEOUT_MS);
+
       chrome.runtime.sendNativeMessage(
         config.hostName,
         payload,
         (response) => {
+          clearTimeout(timeoutId);
           if (chrome.runtime.lastError) {
             resolve({ success: false, error: chrome.runtime.lastError.message });
           } else if (response && response.status === 'error') {
@@ -77,6 +89,7 @@ async function sendToMpv(url, extraFlags = [], referer = null, tabId = null) {
     });
   } finally {
     if (tabId) dispatchingTabs.delete(tabId);
+    activeDispatches--;
   }
 }
 
@@ -109,5 +122,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     } else if (!res.success) {
       console.warn("[MV3 Bridge] Dispatch failed:", res.error);
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn("[MV3 Bridge] Context menu dispatch error:", err);
+  }
 });

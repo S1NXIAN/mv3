@@ -153,7 +153,9 @@ async function saveSettings(btnSave) {
       advancedMode: document.getElementById("toggle-advanced")?.checked ?? false,
     };
 
-    if (!newConfig.mpvPath.startsWith("/") || /[;&|$\(\)]/.test(newConfig.mpvPath)) {
+    if (!newConfig.mpvPath.startsWith("/") ||
+        /[;&|$\(\)]/.test(newConfig.mpvPath) ||
+        !/mpv(\.exe)?$/i.test(newConfig.mpvPath)) {
       flashToast("ERR: Invalid path format.");
       return;
     }

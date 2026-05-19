@@ -16,15 +16,17 @@
   ];
   const BLOCKED_CONTAINERS = ["video/webm"];
 
+  // Pre-compiled regexes — avoids RegExp object creation on every canPlayType call
+  const CODEC_REGEXES = BLOCKED_CODECS.map(
+    c => new RegExp(`(^|[,\\s])${c}([,\\s]|$)`, 'i')
+  );
+
   const isBlocked = (type) => {
     if (!type || typeof type !== 'string') return false;
     const lowerType = type.toLowerCase();
     if (BLOCKED_CONTAINERS.some(c => lowerType.includes(c))) return true;
     if (BLOCKED_PROFILES.some(p => lowerType.includes(p))) return true;
-    return BLOCKED_CODECS.some(c => {
-      const regex = new RegExp(`(^|[,\\s])${c}([,\\s]|$)`, 'i');
-      return regex.test(lowerType);
-    });
+    return CODEC_REGEXES.some(regex => regex.test(lowerType));
   };
 
   const originalCanPlayType = HTMLMediaElement.prototype.canPlayType;

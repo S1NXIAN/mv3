@@ -5,13 +5,31 @@ const PLAYLIST_CACHE_TTL_MS = 60000;
 const MAX_CACHE_SIZE = 100;
 
 const playlistCache = new Map();
+let _cacheCleanupTimer = null;
 
 function addToCache(url, data) {
+  // Lazily schedule periodic cleanup of stale entries
+  if (!_cacheCleanupTimer) {
+    _cacheCleanupTimer = setInterval(evictStaleCacheEntries, PLAYLIST_CACHE_TTL_MS);
+  }
   if (playlistCache.size >= MAX_CACHE_SIZE) {
     const firstKey = playlistCache.keys().next().value;
     playlistCache.delete(firstKey);
   }
   playlistCache.set(url, data);
+}
+
+function evictStaleCacheEntries() {
+  const now = Date.now();
+  for (const [url, entry] of playlistCache) {
+    if (now - entry.timestamp > PLAYLIST_CACHE_TTL_MS) {
+      playlistCache.delete(url);
+    }
+  }
+  if (playlistCache.size === 0 && _cacheCleanupTimer) {
+    clearInterval(_cacheCleanupTimer);
+    _cacheCleanupTimer = null;
+  }
 }
 
 const HLS_MIME_TYPES = [

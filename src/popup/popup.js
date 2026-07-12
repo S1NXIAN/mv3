@@ -5,25 +5,11 @@ const STREAM_TYPE_ORDER = { master: 0, media: 1, unknown: 2 };
 
 document.addEventListener("DOMContentLoaded", init);
 
-let _glitchTimeouts = [];
-
-function cleanup() {
-  _glitchTimeouts.forEach(clearTimeout);
-  _glitchTimeouts = [];
-}
-
 async function init() {
   const btnOptions = document.getElementById("btn-options");
   btnOptions.addEventListener("click", () => {
     chrome.runtime.openOptionsPage();
   });
-
-  const bridgeEl = document.getElementById("title-bridge");
-  if (bridgeEl) {
-    _glitchTimeouts.push(...MV3_UI.initRandomGlitch(bridgeEl, "BRIDGE"));
-  }
-
-  window.addEventListener("unload", cleanup);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const pageUrlEl = document.getElementById("page-url");
@@ -39,7 +25,9 @@ async function init() {
   if (pageUrlEl) {
     pageUrlEl.textContent = displayUrl;
     pageUrlEl.title = tab.url;
-    MV3_UI.applyScrambleCopy(pageUrlEl, tab.url, (msg) => showToast(msg, "error"));
+    pageUrlEl.addEventListener("click", () => {
+      navigator.clipboard.writeText(tab.url).then(() => showToast("URL copied"));
+    });
   }
 
   const btnSendPage = document.getElementById("btn-send-page");
@@ -126,7 +114,10 @@ function renderStreams(state) {
     urlSpan.textContent = truncateUrl(entry.url, 40);
     urlSpan.title = "Click to copy URL";
 
-    MV3_UI.applyScrambleCopy(urlSpan, entry.url, (msg) => showToast(msg, "error"));
+    urlSpan.addEventListener("click", (e) => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(entry.url).then(() => showToast("URL copied"));
+    });
 
     const strip = document.createElement("div");
     strip.className = "inject-strip";
@@ -154,17 +145,12 @@ function sendUrl(url, btnEl) {
   if (!url || btnEl.classList.contains("sending")) return;
 
   btnEl.classList.add("sending");
-  const originalHtml = btnEl.innerHTML;
-
-  if (btnEl.classList.contains("hud-action-btn")) {
-    btnEl.innerHTML = `<div class="btn-scan"></div>[ TX... ]`;
-  } else {
-    btnEl.textContent = "[ TRANSMITTING ]";
-  }
+  const originalText = btnEl.textContent;
+  btnEl.textContent = "[ TRANSMITTING ]";
 
   const timeoutId = setTimeout(() => {
     btnEl.classList.remove("sending");
-    btnEl.innerHTML = originalHtml;
+    btnEl.textContent = originalText;
     showToast("ERR: TX_TIMEOUT", "error");
   }, SEND_TIMEOUT_MS);
 
@@ -173,7 +159,7 @@ function sendUrl(url, btnEl) {
     (result) => {
       clearTimeout(timeoutId);
       btnEl.classList.remove("sending");
-      btnEl.innerHTML = originalHtml;
+      btnEl.textContent = originalText;
 
       if (chrome.runtime.lastError) {
         showToast(`ERR: ${chrome.runtime.lastError.message?.toUpperCase() || 'TX_FAILURE'}`, "error");

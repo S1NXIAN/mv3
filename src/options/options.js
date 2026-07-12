@@ -3,18 +3,10 @@ const CONNECTION_TIMEOUT_MS = 5000;
 const TOAST_DISPLAY_MS = 2000;
 const ADVANCED_FADE_MS = 300;
 
-const _glitchTimeouts = [];
 let _isSaving = false;
 let _configCache = null;
 
 document.addEventListener("DOMContentLoaded", loadSettings);
-
-function cleanup() {
-  _glitchTimeouts.forEach(clearTimeout);
-}
-
-window.addEventListener("unload", cleanup);
-window.addEventListener("beforeunload", cleanup);
 
 async function loadSettings() {
   try {
@@ -26,9 +18,7 @@ async function loadSettings() {
     const manifest = chrome.runtime.getManifest();
     const versionEl = document.getElementById("app-version");
     if (versionEl) {
-      const versionStr = `v${manifest.version}`;
-      versionEl.textContent = versionStr;
-      _glitchTimeouts.push(...MV3_UI.initRandomGlitch(versionEl, versionStr));
+      versionEl.textContent = `v${manifest.version}`;
     }
 
     populateFields(config);
@@ -102,12 +92,8 @@ function bindAdvancedToggle() {
     const isChecked = e.target.checked;
     advPanels.forEach((el) => {
       if (isChecked) {
-        el.style.display = ""; // Clears inline style, reverts to grid default
-        el.classList.remove("glitch-out");
-        el.classList.add("glitch-in");
+        el.style.display = "";
       } else {
-        el.classList.remove("glitch-in");
-        el.classList.add("glitch-out");
         setTimeout(() => {
           if (!advToggle.checked) el.style.display = "none";
         }, ADVANCED_FADE_MS);
@@ -174,7 +160,7 @@ async function saveSettings(btnSave) {
   } finally {
     _isSaving = false;
     if (btnSave) {
-      btnSave.innerHTML = '<div class="btn-scan"></div>[ COMMIT CHANGES ]';
+      btnSave.textContent = "[ COMMIT CHANGES ]";
       btnSave.disabled = false;
     }
   }

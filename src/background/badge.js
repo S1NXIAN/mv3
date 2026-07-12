@@ -14,15 +14,11 @@ const ICON_ACTIVE = {
 
 const badgeUpdateTimeouts = new Map();
 
-function clearBadgeTimeout(tabId) {
+function debouncedBadgeUpdate(tabId) {
   if (badgeUpdateTimeouts.has(tabId)) {
     clearTimeout(badgeUpdateTimeouts.get(tabId));
     badgeUpdateTimeouts.delete(tabId);
   }
-}
-
-function debouncedBadgeUpdate(tabId) {
-  clearBadgeTimeout(tabId);
   badgeUpdateTimeouts.set(tabId, setTimeout(async () => {
     badgeUpdateTimeouts.delete(tabId);
     const currentState = await getTabState(tabId);

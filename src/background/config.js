@@ -1,21 +1,10 @@
-const CONFIG_CACHE_TTL_MS = 5000;
 const H264IFY_SCRIPT_ID = "h264ify-shield";
 
-let _configCache = null;
-let _configCacheTime = 0;
 let _configPromise = null;
 
-async function getConfig(forceRefresh = false) {
-  const now = Date.now();
-  if (_configCache && !forceRefresh && (now - _configCacheTime) < CONFIG_CACHE_TTL_MS) {
-    return _configCache;
-  }
-  if (_configPromise && !forceRefresh) {
-    return _configPromise;
-  }
+async function getConfig() {
+  if (_configPromise) return _configPromise;
   _configPromise = chrome.storage.sync.get(MV3_CONFIG_DEFAULTS).then(config => {
-    _configCache = config;
-    _configCacheTime = Date.now();
     _configPromise = null;
     return config;
   }).catch(err => {

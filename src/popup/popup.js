@@ -24,7 +24,6 @@ async function init() {
   }
 
   window.addEventListener("unload", cleanup);
-  window.addEventListener("beforeunload", cleanup);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const pageUrlEl = document.getElementById("page-url");

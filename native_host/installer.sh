@@ -76,6 +76,7 @@ source_browser_list() {
   define_browser "Brave"                "$HOME/.config/BraveSoftware/Brave-Browser"
   define_browser "Brave Beta"           "$HOME/.config/BraveSoftware/Brave-Browser-Beta"
   define_browser "Brave Nightly"        "$HOME/.config/BraveSoftware/Brave-Browser-Nightly"
+  define_browser "Brave Origin"         "$HOME/.config/BraveSoftware/Brave-Origin"
   define_browser "Brave Origin Nightly" "$HOME/.config/BraveSoftware/Brave-Origin-Nightly"
   define_browser "Microsoft Edge"       "$HOME/.config/microsoft-edge"
   define_browser "Edge Beta"            "$HOME/.config/microsoft-edge-beta"

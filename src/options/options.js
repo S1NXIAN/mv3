@@ -21,6 +21,19 @@ async function loadSettings() {
       versionEl.textContent = `v${manifest.version}`;
     }
 
+    const extId = chrome.runtime.id;
+    const extIdEl = document.getElementById("ext-id");
+    const cmdEl = document.getElementById("install-cmd");
+    if (extIdEl) {
+      extIdEl.textContent = extId;
+      extIdEl.addEventListener("click", () => navigator.clipboard.writeText(extId));
+    }
+    if (cmdEl) {
+      const cmd = `native_host/installer.sh ${extId}`;
+      cmdEl.textContent = cmd;
+      cmdEl.addEventListener("click", () => navigator.clipboard.writeText(cmd));
+    }
+
     populateFields(config);
     bindAdvancedToggle();
     bindButtons();

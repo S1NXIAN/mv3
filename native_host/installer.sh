@@ -90,6 +90,10 @@ source_browser_list() {
 #─────────────────────────────────────────────────────────────────
 case "${1:-}" in
   --uninstall|-u) uninstall_all ;;
+  [a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p][a-p])
+    ext_id="$1"
+    goto_install=true
+    ;;
 esac
 
 printf "\n"
@@ -162,28 +166,33 @@ printf "\n\n"
 #───────────────────────────────────────
 # EXTENSION ID
 #───────────────────────────────────────
-announce "Extension ID"
+if [ "${goto_install:-false}" = "true" ] && [ -n "${ext_id:-}" ]; then
+  announce "Extension ID (from CLI arg)"
+  ok "$ext_id"
+else
+  announce "Extension ID"
 
-printf "  ${D}Open${W} chrome://extensions ${D}→ enable Developer Mode${W}\n"
-printf "  ${D}Copy the 32-character ID (letters a—p only)${W}\n\n"
+  printf "  ${D}Open${W} chrome://extensions ${D}→ enable Developer Mode${W}\\n"
+  printf "  ${D}Copy the 32-character ID (letters a—p only)${W}\\n\\n"
 
-while true; do
-  printf "  ${B}›${W} "
-  read -r ext_id
-  ext_id="${ext_id// /}"
-  [ -z "$ext_id" ] && die "Extension ID required"
+  while true; do
+    printf "  ${B}›${W} "
+    read -r ext_id
+    ext_id="${ext_id// /}"
+    [ -z "$ext_id" ] && die "Extension ID required"
 
-  if echo "$ext_id" | grep -qP '^[a-p]{32}$'; then
-    break
-  fi
+    if echo "$ext_id" | grep -qP '^[a-p]{32}$'; then
+      break
+    fi
 
-  warn "Invalid — must be 32 chars, letters a–p only"
-  printf "  ${D}Retry? [Y/n]:${W} "
-  read -r retry
-  case "$retry" in
-    n|N|no) die "Aborted" ;;
-  esac
-done
+    warn "Invalid — must be 32 chars, letters a–p only"
+    printf "  ${D}Retry? [Y/n]:${W} "
+    read -r retry
+    case "$retry" in
+      n|N|no) die "Aborted" ;;
+    esac
+  done
+fi
 
 #───────────────────────────────────────
 # INSTALL
